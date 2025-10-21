@@ -1,0 +1,322 @@
+# Copyright (C) 2025 Hugo Scheer
+# This file is distributed under the same license as the Custom Addons for Elementor by Hugo Scheer package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Custom Addons for Elementor by Hugo Scheer 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/custom-addons-for-elementor-by-hugo-scheer\n"
+"POT-Creation-Date: 2025-01-20 12:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2025-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: custom-addons-for-elementor-by-hugo-scheer.php:25
+msgid "Custom Addons for Elementor requires %s to be installed and activated."
+msgstr ""
+
+#: custom-addons-for-elementor-by-hugo-scheer.php:25
+msgid "Elementor"
+msgstr ""
+
+#: custom-addons-for-elementor-by-hugo-scheer.php:35
+msgid "Custom Addons for Elementor"
+msgstr ""
+
+#: custom-addons-for-elementor-by-hugo-scheer.php:35
+msgid "%1$s requires %2$s version %3$s or greater."
+msgstr ""
+
+#: custom-addons-for-elementor-by-hugo-scheer.php:35
+msgid "Elementor"
+msgstr ""
+
+#: includes/class-cae-plugin.php:35
+msgid "Custom Addons by Hugo Scheer"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:25
+msgid "CAE Hero"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:50
+msgid "Content"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:55
+msgid "Background Type"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:60
+msgid "Image"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:61
+msgid "Color"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:68
+msgid "Background Image"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:78
+msgid "Background Color"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:88
+msgid "Overlay Color"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:98
+msgid "Overlay Opacity"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:115
+msgid "Title"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:116
+msgid "Your Hero Title"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:123
+msgid "Subtitle"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:124
+msgid "Your compelling subtitle goes here"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:131
+msgid "CTA Text"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:132
+msgid "Learn More"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:139
+msgid "CTA URL"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:147
+msgid "Content Alignment"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:152
+msgid "Left"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:157
+msgid "Center"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:162
+msgid "Right"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:180
+msgid "Style"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:185
+msgid "Title Color"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:195
+msgid "Title Typography"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:205
+msgid "Subtitle Color"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:215
+msgid "Subtitle Typography"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:225
+msgid "CTA Color"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:235
+msgid "CTA Background"
+msgstr ""
+
+#: lib/cae-hero/class-cae-hero.php:245
+msgid "Padding"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:25
+msgid "CAE Footer"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:50
+msgid "Content"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:55
+msgid "Number of Columns"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:70
+msgid "Show Logo"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:78
+msgid "Logo Text"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:79
+msgid "Your Brand"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:87
+msgid "Column 1 Title"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:94
+msgid "Column 1 Menu"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:102
+msgid "Column 2 Title"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:109
+msgid "Column 2 Menu"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:117
+msgid "Column 3 Title"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:124
+msgid "Column 3 Menu"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:132
+msgid "Column 4 Title"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:139
+msgid "Column 4 Menu"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:147
+msgid "Legal Text"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:150
+msgctxt "Legal text with year placeholder"
+msgid "© %s All rights reserved"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:160
+msgid "Style"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:165
+msgid "Background Color"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:175
+msgid "Text Color"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:185
+msgid "Link Color"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:195
+msgid "Padding"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:220
+msgid "— Select —"
+msgstr ""
+
+#: lib/cae-footer/class-cae-footer.php:280
+msgid "Column %d"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:25
+msgid "CAE Repeater Section"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:50
+msgid "Content"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:55
+msgid "Image"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:62
+msgid "Title"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:69
+msgid "Content"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:76
+msgid "Image Position"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:80
+msgid "Left"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:83
+msgid "Right"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:90
+msgid "Items"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:95
+msgid "First Item"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:96
+msgid "Your content goes here..."
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:102
+msgid "Second Item"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:103
+msgid "Your content goes here..."
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:120
+msgid "Style"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:125
+msgid "Background Color"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:135
+msgid "Text Color"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:145
+msgid "Item Spacing"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:165
+msgid "Title Typography"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:175
+msgid "Content Typography"
+msgstr ""
+
+#: lib/cae-repeater-section/class-cae-repeater-section.php:185
+msgid "Padding"
+msgstr ""

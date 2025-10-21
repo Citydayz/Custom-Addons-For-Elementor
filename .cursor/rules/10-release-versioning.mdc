@@ -1,0 +1,118 @@
+# Cursor Rules — 10 Release & Versioning (Authoritative)
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Scope:** Versioning, changelog, packaging, and delivery requirements.  
+> **Hierarchy:** Overruled only by `01-project.mdc`.
+
+---
+
+## 🎯 Objectives
+- Ship **clean, versioned, and documented** releases of the plugin.  
+- Ensure reproducible builds and **zero debug artifacts**.  
+- Keep WordPress headers, enqueues, and assets **in sync** with version numbers.
+
+---
+
+## 🔢 Versioning (SemVer)
+- Use **SemVer**: `MAJOR.MINOR.PATCH` (e.g., `1.2.3`).  
+- Bump version **only** when behavior changes:
+  - `MAJOR`: breaking changes in APIs or behavior.  
+  - `MINOR`: new features, backward compatible.  
+  - `PATCH`: bug fixes or small improvements.
+
+### Where to Update
+- Plugin header (`Version:`) in `/custom-addons-for-elementor-by-hugo-scheer.php`.  
+- Constant `CAE_VERSION` (see `02-architecture.mdc` loader).  
+- Any asset version references (enqueue) must use `CAE_VERSION` (no hardcoded).
+
+---
+
+## 🧾 Changelog
+- Maintain a `CHANGELOG.md` at project root.  
+- Format example:
+```md
+## [1.2.0] - 2025-02-14
+### Added
+- New widget: CAE Hero with background overlay.
+
+### Changed
+- Footer: improved responsive grid defaults.
+
+### Fixed
+- Security: sanitized legal text in footer render.
+```
+- Link each entry to issues/PRs if available.
+
+---
+
+## 📦 Packaging Rules
+- **Release artifact:** `custom-addons-for-elementor-by-hugo-scheer-<version>.zip` containing:  
+```
+/custom-addons-for-elementor-by-hugo-scheer.php
+/lib/
+/assets/
+/languages/
+/includes/
+readme.txt (optional WP readme)
+CHANGELOG.md
+```
+- **Exclude** development-only files: `.git`, `.github`, `node_modules` (if any), source maps (unless required), raw design docs, local configs, debug logs.
+
+---
+
+## 🧹 Pre-Release Cleanup
+- Remove **all debug** calls: `cae_log(`, `CAE_DEBUG.log(`, `[CAE]` markers.  
+- Remove unused images, CSS rules, and JS modules.  
+- Ensure images optimized; no >2 KB base64 in CSS.  
+- Ensure **licenses** for any third-party code are included and compatible.
+
+---
+
+## 🧪 Pre-Flight Checklist
+- [ ] Version bumped in header + `CAE_VERSION`.  
+- [ ] Assets use `CAE_VERSION`; cache busting OK.  
+- [ ] Widgets register/enqueue correctly on a clean WP install.  
+- [ ] Security baseline passes (04).  
+- [ ] Accessibility checklist passes (05).  
+- [ ] Performance budgets respected (06).  
+- [ ] GDPR/Consent behavior correct (07).  
+- [ ] i18n loaded; `.pot` updated if strings changed.  
+- [ ] Debug artifacts removed (12).  
+- [ ] Changelog updated.  
+- [ ] Zip contains only necessary files.
+
+---
+
+## 🔁 Release Process (Manual)
+1. Update code & docs; bump version.  
+2. Run self-checks (security, a11y, perf, GDPR) and manual smoke test.  
+3. Update `CHANGELOG.md`.  
+4. Build the ZIP artifact.  
+5. Test install the ZIP on a clean WP site; verify activation, widgets appear, controls & render OK.  
+6. Publish release (Git tag `vMAJOR.MINOR.PATCH`) with changelog notes.
+
+---
+
+## 🧪 Optional CI Hints (if CI added later)
+- Job: validate PHP syntax (php -l), optional PHPCS.  
+- Job: ensure referenced asset files exist (paths/handles).  
+- Job: build ZIP, attach as artifact.  
+- Job: basic E2E smoke (activate plugin, check Elementor category present).
+
+---
+
+## 🚫 Forbidden
+- Shipping with debug logs or console statements enabled.  
+- Hardcoded version numbers in asset URLs (must use `CAE_VERSION`).  
+- Packaging node_modules or dev-only files.  
+- Mismatched plugin header and loader version.
+
+---
+
+## 🧭 Agent Routing
+- Packaging adjustments and version bumps → **Agent 1**.  
+- Security/a11y/perf/GDPR preflight → **Agents 3/4/5/8**.  
+- Changelog edits & final validation → **Agent 0**.
+
+---
+
+**End of 10 Release & Versioning — Authoritative.**

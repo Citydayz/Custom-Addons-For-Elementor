@@ -1,0 +1,152 @@
+/* CAE Footer Widget Styles */
+.cae-footer {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  padding: 3rem 0 2rem;
+}
+
+.cae-footer__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.cae-footer__logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.cae-footer__columns {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.cae-footer__columns--1 {
+  grid-template-columns: 1fr;
+}
+
+.cae-footer__columns--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.cae-footer__columns--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.cae-footer__columns--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.cae-footer__column {
+  text-align: center;
+}
+
+.cae-footer__column-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: #ffffff;
+}
+
+.cae-footer__menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cae-footer__menu li {
+  margin-bottom: 0.5rem;
+}
+
+.cae-footer__menu a {
+  color: #cccccc;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  display: inline-block;
+  padding: 0.25rem 0;
+}
+
+.cae-footer__menu a:hover,
+.cae-footer__menu a:focus {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.cae-footer__menu a:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.cae-footer__legal {
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid #333333;
+  color: #999999;
+  font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cae-footer {
+    padding: 2rem 0 1.5rem;
+  }
+
+  .cae-footer__container {
+    padding: 0 1rem;
+  }
+
+  .cae-footer__columns--2,
+  .cae-footer__columns--3,
+  .cae-footer__columns--4 {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .cae-footer__logo {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cae-footer__column-title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cae-footer {
+    padding: 1.5rem 0 1rem;
+  }
+
+  .cae-footer__container {
+    padding: 0 0.75rem;
+  }
+
+  .cae-footer__columns {
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cae-footer__legal {
+    padding-top: 1.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Accessibility: Ensure touch targets are large enough */
+.cae-footer__menu a {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Accessibility: Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .cae-footer__menu a {
+    transition: none;
+  }
+}

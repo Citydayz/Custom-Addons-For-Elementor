@@ -1,0 +1,79 @@
+# Cursor Rules — 14 Localization (Authoritative)
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Scope:** i18n/l10n requirements for strings, formats, and translations.  
+> **Hierarchy:** Overruled only by `01-project.mdc` and WP core practices.
+
+---
+
+## 🎯 Goals
+- Ensure **all user-facing strings** are translatable and use the **`cae`** textdomain.  
+- Provide a predictable pipeline for generating translation files.
+
+---
+
+## 🧾 Textdomain & Loading
+- Textdomain: `cae`.  
+- Load at init:
+```php
+load_plugin_textdomain( 'cae', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+```
+
+---
+
+## 🗣️ String Rules
+- Wrap strings with `__()`, `_e()`, `_x()` as appropriate.  
+- **No concatenation** of translatable fragments; use placeholders with `sprintf()`.  
+- For numbers/dates, use WP i18n helpers when needed.  
+- Provide translator comments for ambiguous phrases.
+
+### Example
+```php
+printf(
+  /* translators: %s: current year */
+  esc_html__( '© %s All rights reserved', 'cae' ),
+  esc_html( date_i18n( 'Y' ) )
+);
+```
+
+---
+
+## 📁 Files
+- Store translation files in `/languages/`:  
+  - `cae.pot` (template)  
+  - `cae-<locale>.po` / `cae-<locale>.mo`
+
+---
+
+## 🧰 Generating POT (example command)
+If using WP-CLI (recommended):
+```bash
+wp i18n make-pot . languages/cae.pot --exclude=node_modules,vendor,.git
+```
+If not, use a Poedit or similar tool pointing to plugin root.
+
+---
+
+## 🧪 Validation Checklist
+- [ ] All user-facing strings wrapped and use `cae` domain.  
+- [ ] No concatenation; placeholders used.  
+- [ ] Translator comments present where needed.  
+- [ ] Textdomain loaded successfully.  
+- [ ] `.pot` generated/updated after string changes.
+
+---
+
+## 🚫 Forbidden
+- Hardcoded strings without i18n wrappers.  
+- Mixing languages in UI.  
+- Building full sentences with concatenation of small translated pieces.
+
+---
+
+## 🧭 Agent Routing
+- i18n wrappers in code → **Agent 1** (implementation).  
+- Review coverage of strings → **Agent 2**.  
+- Final validation → **Agent 0**.
+
+---
+
+**End of 14 Localization — Authoritative.**

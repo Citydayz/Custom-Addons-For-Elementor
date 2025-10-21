@@ -1,0 +1,148 @@
+# Cursor Rules — 06 Performance (Authoritative)
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Scope:** Front-end and back-end performance rules for all widgets and plugin code.  
+> **Hierarchy:** Overruled only by `01-project.mdc`. If a trade-off arises, **security** still comes first.
+
+---
+
+## 🎯 Objectives
+- **Load only what is needed, where it is needed.**  
+- Keep CSS/JS **small**, **deferred**, and **scoped**.  
+- Minimize server work (queries, loops, remote calls) and use **caching** wisely.  
+- Maintain consistent **Core Web Vitals**: LCP, CLS, INP.
+
+---
+
+## 🧩 Asset Strategy (CSS/JS)
+### Registration vs Enqueue
+- **Register globally**, **enqueue conditionally** (only on pages where the widget is present). See `02-architecture.mdc` for registry pattern.
+- Use **handles identical to widget slugs** (e.g., `cae-footer`).
+
+### JS Delivery
+- Enqueue scripts in footer (`in_footer = true`).
+- Prefer **vanilla JS**; only depend on `jquery` if strictly required.
+- Mark third-party scripts `defer` or `async` when safe:
+```php
+add_filter( 'script_loader_tag', function( $tag, $handle, $src ) {
+  $defer = [ 'cae-hero' /* ... */ ];
+  if ( in_array( $handle, $defer, true ) ) {
+    return '<script src="' . esc_url( $src ) . '" defer></script>';
+  }
+  return $tag;
+}, 10, 3 );
+```
+
+### CSS Delivery
+- Keep `global.css` **minimal** (utilities only).  
+- Scope per-widget CSS under `.{widget-slug}` to avoid leakage.  
+- Avoid large component libraries; write focused CSS.  
+- Optional advanced: **inline critical CSS** for above-the-fold sections of a given widget only if small and sanitized.
+
+### Size Budgets (soft caps)
+- **Per widget CSS**: ≤ **8 KB** uncompressed.  
+- **Per widget JS**: ≤ **12 KB** uncompressed.  
+- **Global CSS/JS** combined: ≤ **20 KB** uncompressed.  
+> If exceeded, route to **Agent 5 (Performance)** to reduce footprint.
+
+---
+
+## 🖼️ Media & Images
+- Use **responsive images**: `srcset/sizes` or Elementor’s built-ins.  
+- Enable **lazy-loading** (`loading="lazy"`) for below-the-fold images.  
+- Prefer modern formats (WebP/AVIF) when available.  
+- Provide explicit `width`/`height` to prevent **CLS**.  
+- Do not embed large background images via inline CSS if avoidable.
+
+```php
+echo '<img src="' . esc_url( $src ) . '" alt="' . esc_attr( $alt ) . '" loading="lazy" width="400" height="300">';
+```
+
+---
+
+## 🗃️ Database & Queries
+- Avoid queries in `render()` loops; prefetch or memoize when possible.  
+- Use `$wpdb->prepare()` for dynamic queries and **proper indexes** if custom tables (rare).  
+- Cache repeatable queries with **transients** or **object cache**.
+
+```php
+$key = 'cae_footer_menus_v1';
+$menus = get_transient( $key );
+if ( false === $menus ) {
+  $menus = wp_get_nav_menus();
+  set_transient( $key, $menus, HOUR_IN_SECONDS );
+}
+```
+
+> Invalidate caches when relevant settings change (hook appropriate actions).
+
+---
+
+## 🌐 Remote Requests
+- Avoid blocking remote calls in front-end rendering.  
+- If needed, use **WP HTTP API** (`wp_remote_get`) with timeouts and cache responses.  
+- Never call remote services synchronously in `render()`.
+
+---
+
+## ♻️ Conditional Logic & Short-Circuits
+- Use **early returns** to skip unnecessary work.  
+- Do not compute derived values more than once per request; reuse variables.  
+- Avoid heavy regex or string ops inside tight loops.
+
+---
+
+## ✨ Markup & CSS to Reduce CLS
+- Always include explicit dimensions for images/media/iframes.  
+- Minimize layout thrashing: avoid JS that forces style recalculation repeatedly.  
+- Prefer CSS transitions over JS animations; respect `prefers-reduced-motion`.
+
+---
+
+## 🔧 Build & Minification (Optional)
+- If a build step is introduced later: concatenate/minify per widget bundles.  
+- Generate source maps for debugging; do **not** ship unminified third-party code.  
+- Keep an **unbundled** development source alongside the built asset if needed.
+
+---
+
+## 🧪 Performance Validation Checklist (per widget)
+- [ ] CSS/JS under size budgets or justified.  
+- [ ] Assets registered once, **enqueued only when used**.  
+- [ ] No render-blocking global assets.  
+- [ ] Images lazy-loaded; dimensions set; no CLS.  
+- [ ] No remote blocking calls in render path.  
+- [ ] Repeated queries cached (transient/object cache).  
+- [ ] No jQuery unless necessary.  
+- [ ] Script tag optimized (`defer`/`async` when safe).
+
+If any fail → route to **Agent 5 (Performance)** for remediation.
+
+---
+
+## 🚫 Forbidden Patterns
+- Enqueue global assets on all pages without justification.  
+- Large, unused utility frameworks for small tasks.  
+- Inline base64 images > 2 KB.  
+- Querying menus/options repeatedly in the same request without caching.  
+- Synchronous remote calls inside `render()`.
+
+---
+
+## 📈 Optional Metrics & Reporting
+- When submitting a PR or deliverable, include:
+  - Approximate **CSS/JS sizes** added.  
+  - Count of added **HTTP requests**.  
+  - Any caching/transient keys introduced and TTLs.  
+  - Notable LCP/CLS/INP considerations.
+
+---
+
+## 🧭 Agent Routing
+- Asset strategy and reductions → **Agent 5**.  
+- Implementation changes to enable conditional enqueue → **Agent 1**.  
+- Image handling issues (CLS/lazy) → **Agent 1** + review by **Agent 5**.  
+- Final validation → **Agent 0**.
+
+---
+
+**End of 06 Performance — Authoritative.**

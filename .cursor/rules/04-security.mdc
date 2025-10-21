@@ -1,0 +1,273 @@
+# Cursor Rules — 04 Security (Authoritative)
+
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Scope:** Security policies and enforcement rules for all plugin components.  
+> **Priority:** Security > Performance > Aesthetics.  
+> **Hierarchy:** Only `01-project.mdc` can override this document.
+
+---
+
+## 🧭 Purpose
+
+Define and enforce a **zero-compromise WordPress + OWASP security baseline** for all PHP, JS, and data-handling code in the project.  
+Cursor **must reject** or route to **Agent 3 (Security)** any code that violates these principles.
+
+---
+
+## 🧱 Core Principles
+
+- **Validate every input**, **escape every output**, **authenticate every action**.
+- **No direct DB or file access** without WordPress APIs.
+- **Defense in depth**: sanitize → verify → escape → least privilege.
+
+---
+
+## 🔐 WordPress Security Baseline
+
+### 1. Input Validation
+
+All user or external data **must be sanitized** using native WP helpers before use.
+
+| Type     | Function                                 | Example                                          |
+| -------- | ---------------------------------------- | ------------------------------------------------ |
+| Text     | `sanitize_text_field()`                  | `$title = sanitize_text_field($_POST['title']);` |
+| Email    | `sanitize_email()`                       | `$email = sanitize_email($_POST['email']);`      |
+| URL      | `esc_url_raw()`                          | `$url = esc_url_raw($_POST['redirect']);`        |
+| Key/Slug | `sanitize_key()`                         | `$slug = sanitize_key($_GET['slug']);`           |
+| Int      | `absint()` / `intval()`                  | `$id = absint($_GET['id']);`                     |
+| Checkbox | `(bool)`                                 | `$active = !empty($_POST['active']);`            |
+| Array    | `array_map('sanitize_text_field', $arr)` | sanitize arrays recursively                      |
+
+Cursor must **refuse** unvalidated input from:
+
+- `$_POST`, `$_GET`, `$_REQUEST`, `$_COOKIE`, `$_FILES`, or third-party APIs.
+- Any external REST/AJAX payload.
+
+---
+
+### 2. Output Escaping
+
+All outputs **must** be escaped contextually.
+
+| Context            | Function           | Example                                                           |
+| ------------------ | ------------------ | ----------------------------------------------------------------- |
+| HTML               | `esc_html()`       | `echo esc_html( $title );`                                        |
+| Attribute          | `esc_attr()`       | `<a title="<?php echo esc_attr($title); ?>">`                     |
+| URL                | `esc_url()`        | `<a href="<?php echo esc_url($url); ?>">`                         |
+| JS                 | `wp_json_encode()` | `echo '<script>var data=' . wp_json_encode($arr) . ';</script>';` |
+| HTML (safe subset) | `wp_kses_post()`   | `echo wp_kses_post( $content );`                                  |
+
+> If unsure, **escape anyway** — idempotent and harmless.
+
+---
+
+### 3. Nonces (CSRF Protection)
+
+All state-changing requests must include and verify **nonces**.
+
+#### Generation
+
+```php
+wp_nonce_field( 'cae_action', '_wpnonce', true, true );
+```
+
+#### Verification
+
+```php
+if ( ! isset($_POST['_wpnonce']) || ! wp_verify_nonce($_POST['_wpnonce'], 'cae_action') ) {
+  wp_die( __( 'Security check failed.', 'cae' ) );
+}
+```
+
+> Every AJAX, REST, or admin form must include a unique action-specific nonce.  
+> Nonces expire after 24h (default) — refresh safely when needed.
+
+---
+
+### 4. SQL Injection Prevention
+
+**Always** use `$wpdb->prepare()` when interpolating variables into SQL.
+
+```php
+$results = $wpdb->get_results(
+  $wpdb->prepare( "SELECT * FROM {$wpdb->posts} WHERE post_type = %s LIMIT %d", $type, $limit )
+);
+```
+
+Never concatenate raw variables into SQL strings.  
+Cursor must reject any raw query using string interpolation or variable expansion.
+
+---
+
+### 5. File Handling & Uploads
+
+- Use **WordPress APIs** (`wp_handle_upload`, `wp_check_filetype`, `media_handle_upload`).
+- Restrict to **safe MIME types** (`jpg`, `png`, `svg` if sanitized, `pdf`).
+- Deny `.php` and any executable uploads.
+- Disable execution in upload directories (via `.htaccess` or server config).
+- Validate image dimensions/size on upload.
+
+```php
+$uploaded = wp_handle_upload( $_FILES['image'], ['test_form' => false] );
+if ( isset($uploaded['file']) ) {
+  $filetype = wp_check_filetype( $uploaded['file'] );
+  if ( ! in_array( $filetype['ext'], ['jpg','jpeg','png','svg'] ) ) {
+    unlink( $uploaded['file'] );
+  }
+}
+```
+
+---
+
+### 6. Authentication & Authorization
+
+- Use **WordPress capabilities** to restrict actions.
+  - Example: `current_user_can('manage_options')` for admin-only actions.
+- Avoid relying on user ID comparisons; always check **capabilities**.
+- Protect AJAX endpoints with nonce + capability check.
+
+```php
+if ( ! current_user_can('edit_posts') ) {
+  wp_send_json_error( __( 'Not authorized', 'cae' ), 403 );
+}
+```
+
+---
+
+### 7. Data Storage
+
+- Use WP APIs (`update_option`, `update_user_meta`, `wp_insert_post`) only.
+- Never store raw serialized or JSON user data unless strictly needed.
+- Escape before rendering; sanitize before saving.
+
+---
+
+## ⚙️ OWASP Top 10 Alignment
+
+| Category | Risk                        | Mitigation                                         |
+| -------- | --------------------------- | -------------------------------------------------- |
+| A01      | Broken Access Control       | Use `current_user_can()` for all sensitive actions |
+| A02      | Cryptographic Failures      | No custom encryption; use WP APIs or HTTPS         |
+| A03      | Injection                   | `$wpdb->prepare()`, strict sanitization            |
+| A05      | Security Misconfiguration   | Deny execution in upload dirs; safe defaults       |
+| A07      | Identification/Auth Issues  | Nonces + capability checks                         |
+| A08      | Software/Data Integrity     | Use WP updates; pin versions in enqueues           |
+| A09      | Logging/Monitoring Failures | Log safely, never personal data                    |
+| A10      | SSRF/XXE                    | Never fetch remote URLs unvalidated                |
+
+Cursor should **reference** this table when evaluating suspicious patterns.
+
+---
+
+## 🏗️ Architecture & Code Quality
+
+### God Object Prevention
+
+**Interdiction stricte des "God Objects"** - classes qui font trop de choses et violent le principe de responsabilité unique.
+
+#### Règles d'Architecture
+
+- **Une classe = une responsabilité** claire et bien définie
+- **Maximum 200 lignes** par classe (sauf exceptions documentées)
+- **Maximum 10 méthodes publiques** par classe
+- **Pas de classes utilitaires** avec 20+ méthodes statiques
+- **Séparation claire** entre logique métier, présentation et données
+
+#### Exemples de God Objects à Éviter
+
+```php
+// ❌ INTERDIT - God Object
+class CAE_Everything {
+    public function handle_ajax() { /* ... */ }
+    public function render_shortcode() { /* ... */ }
+    public function process_form() { /* ... */ }
+    public function send_email() { /* ... */ }
+    public function update_database() { /* ... */ }
+    public function generate_pdf() { /* ... */ }
+    // ... 50+ autres méthodes
+}
+
+// ✅ CORRECT - Séparation des responsabilités
+class CAE_Ajax_Handler { /* Gère uniquement AJAX */ }
+class CAE_Shortcode_Renderer { /* Gère uniquement les shortcodes */ }
+class CAE_Form_Processor { /* Gère uniquement les formulaires */ }
+class CAE_Email_Service { /* Gère uniquement l'email */ }
+class CAE_Database_Manager { /* Gère uniquement la DB */ }
+```
+
+#### Validation Automatique
+
+Cursor doit **rejeter** toute classe qui :
+
+- Dépasse 200 lignes sans justification documentée
+- A plus de 10 méthodes publiques
+- Mélange logique métier, présentation et données
+- Contient des méthodes sans rapport logique entre elles
+
+---
+
+## 🧩 AJAX / REST API Endpoints
+
+### Rules
+
+- Register via `add_action('wp_ajax_*')` and `add_action('wp_ajax_nopriv_*')` **only when needed**.
+- Must include nonce verification.
+- Must check capabilities.
+- Must `wp_send_json_success()` or `wp_send_json_error()` — **never echo raw data**.
+
+```php
+add_action( 'wp_ajax_cae_update_footer', 'cae_update_footer' );
+function cae_update_footer() {
+  check_ajax_referer( 'cae_update_footer', 'nonce' );
+  if ( ! current_user_can( 'edit_posts' ) ) {
+    wp_send_json_error( __( 'Unauthorized', 'cae' ), 403 );
+  }
+  wp_send_json_success([ 'ok' => true ]);
+}
+```
+
+---
+
+## 🪪 Secrets & Environment
+
+- **Never** commit API keys, credentials, or tokens.
+- Read from environment variables via `getenv()` or `wp_config`.
+- If configuration required, provide admin UI + safe storage (`update_option` with sanitize).
+- Cursor must block generation of any hardcoded secrets.
+
+---
+
+## 🧑‍💻 Logging & Debugging
+
+- Use `error_log()` only under `WP_DEBUG` conditions.
+- **No personal data** in logs.
+- Do not output debug data in production; remove all `console.log` or `error_log` calls before release.
+
+---
+
+## 🧪 Cursor Validation (Automated Checks)
+
+Before any code is accepted, Cursor must verify:
+
+- ✅ All inputs sanitized.
+- ✅ All outputs escaped.
+- ✅ All nonces verified where required.
+- ✅ All SQL queries prepared.
+- ✅ No inline JS/HTML with unescaped variables.
+- ✅ No unvetted file operations.
+- ✅ No secrets in code or logs.
+
+If one fails → route to **Agent 3 (Security)** with remediation instructions.
+
+---
+
+## 🧭 Agent Routing
+
+- Implementation violating baseline → **Agent 3** (Security).
+- Performance-related security (cache headers, file perms) → **Agent 5**.
+- Logging/debug audit → **Agent 7**.
+- Final verification → **Agent 0**.
+
+---
+
+**End of 04 Security — Authoritative.**

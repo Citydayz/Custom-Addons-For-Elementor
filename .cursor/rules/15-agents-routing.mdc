@@ -1,0 +1,146 @@
+# Cursor Rules — 15 Agents Routing (Authoritative Bridge)
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Scope:** Operational bridge between `.cursor/Rules/*.mdc` and `agent.md` multi-agent orchestration.  
+> **Hierarchy:** Obeys `01-project.mdc`; complements `agent.md` for dispatching and validation.
+
+---
+
+## 🎯 Purpose
+Define **how Cursor routes tasks to agents**, the **default execution pipeline**, the **handoff contract** between agents, and the **failure recovery** strategy.
+
+---
+
+## 🧩 Agents Index (summary)
+| ID | Agent | Role |
+|----|------|------|
+| 0 | Orchestrator | Prompt refinement, dispatch, consolidation, final validation |
+| 1 | Implementation | Code generation (WP + Elementor) |
+| 2 | Quality | Structure, readability, naming (no logic change) |
+| 3 | Security | OWASP + WP baseline enforcement |
+| 4 | Accessibility | WCAG 2.1 checks & fixes |
+| 5 | Performance | Assets/queries optimization |
+| 6 | Research | WP/Elementor docs mapping |
+| 7 | Debug & Logs | Safe logging and repro steps |
+| 8 | GDPR & Consent | Privacy compliance and gating |
+
+> Base prompts live in **`agent.md`** and MUST be applied by each agent.
+
+---
+
+## 🔀 Default Pipeline
+`Agent 0` → `1 (impl)` → `3 (security)` → `4 (a11y)` → `5 (perf)` → `8 (gdpr)` → `2 (quality)` → `7 (debug, if requested)` → `Agent 0` (final)
+
+- If a step reports **blocking issues**, return to the responsible agent for fixes, then **resume** pipeline at the next step.
+
+---
+
+## 🧭 Routing Keywords
+| Keywords in user intent | Route to |
+|-------------------------|----------|
+| build, create, implement, widget, block, footer, hero, enqueue, render | Agent 1 |
+| security, nonce, sanitize, escape, SQL, capability | Agent 3 |
+| aria, keyboard, focus, contrast, a11y, screen reader | Agent 4 |
+| performance, lazy, cache, transient, optimize, defer | Agent 5 |
+| gdpr, consent, privacy, cookie, tracking | Agent 8 |
+| clean, refactor, tidy, docblock, naming | Agent 2 |
+| debug, log, error, repro, trace | Agent 7 |
+| api, docs, reference, hook, filter | Agent 6 |
+
+Cursor should parse the user prompt and **append** the relevant agent instruction.
+
+---
+
+## 📦 Handoff Contract (between agents)
+Each agent MUST return a **structured payload** the next agent can consume:
+
+```md
+### Agent <ID> Output
+- **Summary:** <2–5 bullet points>
+- **Changes:** <files/paths affected>
+- **Notes:** <rationales, risks, TODOs>
+- **Checks:** <self-check results relevant to this agent>
+- **Next:** <recommended next agent + why>
+- **Artifacts:** <full code blocks or explicit file contents>
+```
+
+`Agent 0` must **normalize** outputs to this structure before handoff.
+
+---
+
+## 🧱 Message Schema (recommended)
+```jsonc
+{
+  "agent": 1,
+  "intent": "Create Elementor Footer widget with 1–4 columns and dynamic legal year",
+  "inputs": { "widget": "cae-footer", "options": ["columns","logo","menus","legal_text"] },
+  "constraints": ["01-project.mdc","02-architecture.mdc","03-wp-standards.mdc","04-security.mdc","05-accessibility.mdc","06-performance.mdc","07-gdpr-consent.mdc","08-assets.mdc"],
+  "deliverables": ["files with full paths and contents", "enqueue details", "usage notes"]
+}
+```
+
+`Agent 1` should **not** deviate from constraints; if conflict, raise to `Agent 0`.
+
+---
+
+## 🔁 Failure Recovery & Retries
+- **Validation failed at step N** → route back to the agent that caused the failure with the **exact error list**.  
+- Allow **max 2 retries** per step before escalating to **Agent 0** for decision (relax constraints, split task, or abort).  
+- On repeated performance or security failures, **halt** and require explicit sign-off from `Agent 0`.
+
+---
+
+## 🧪 Cross-Checks (automatic cues)
+- Security: presence of `sanitize_*`, `esc_*`, nonce checks, `$wpdb->prepare` for SQL.  
+- A11y: root scope class, alt texts, focus styles, keyboardability, headings.  
+- Perf: conditional enqueue, asset sizes within budget, lazy loading.  
+- GDPR: consent gate for non-essential scripts; no PII in cookies.  
+- Quality: no placeholders; explicit file paths; readable naming.
+
+---
+
+## 🧰 Example Invocation
+**User:** *“Use agent 0 to create a card widget with image, title, CTA; responsive; global colors & typography.”*
+
+**Agent 0 (refine):**
+- Clarify defaults, scope, file paths; create normalized intent.  
+- Dispatch to **Agent 1** with full constraints set.
+
+**Agent 1 (impl):**
+- Output files: `/lib/cae-card/class-cae-card.php`, `/assets/css/cae-card.css`, optional `/assets/js/cae-card.js`.  
+- Provide enqueue handles and usage note.
+
+**Agent 3/4/5/8/2 (reviews):**
+- Patch security/a11y/perf/GDPR issues; normalize code style.
+  
+**Agent 0 (final):**
+- Return consolidated deliverable + checklist status.
+
+---
+
+## ✅ Final Gate (Agent 0)
+- [ ] All mandatory checks green (Security/A11y/Perf/GDPR).  
+- [ ] Files and paths exactly match the structure.  
+- [ ] No global asset leakage; conditional enqueue verified.  
+- [ ] No debug artifacts if release-targeted.  
+- [ ] Clear usage notes for Elementor editor provided.
+
+If any box is unchecked → **do not deliver**; route to the responsible agent.
+
+---
+
+## 🚫 Forbidden
+- Skipping agents in the pipeline without justification.  
+- Deliverables without explicit paths or with placeholders.  
+- Code that contradicts `01–08` rule files.  
+- Silent failure or swallowing errors — always surface findings to `Agent 0`.
+
+---
+
+## 🧭 Agent Routing (Quick Map)
+- Build → 1 → 3 → 4 → 5 → 8 → 2 → (7 if needed) → 0  
+- Research only → 6 → 0  
+- Debug request → 7 → 3 (sanitize logs) → 0
+
+---
+
+**End of 15 Agents Routing — Authoritative Bridge.**

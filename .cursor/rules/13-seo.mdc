@@ -1,0 +1,76 @@
+# Cursor Rules — 13 SEO (Authoritative — Basics for Widgets)
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Scope:** On-page SEO **basics** applicable to widget markup and assets (not a full SEO suite).  
+> **Hierarchy:** Overruled by `01-project.mdc`; Accessibility and Performance rules take precedence when trade-offs occur.
+
+---
+
+## 🎯 Principles
+- **Semantic HTML** improves both **SEO** and **A11y** — use it first.  
+- Avoid duplicate responsibilities with theme/SEO plugins (Yoast, RankMath).  
+- Keep widgets **light**; do not inject site-wide SEO elements (titles/meta).
+
+---
+
+## 🧩 Markup & Content
+- Use headings in **logical order** — widgets should **not** ship multiple `<h1>`.  
+- Use lists for lists, `<figure>`/`<figcaption>` for media when descriptive.  
+- Provide descriptive link texts (avoid “Read more” alone).  
+- Avoid empty or repeated headings; keep structure predictable.
+
+### Example
+```html
+<section class="cae-hero">
+  <h2>Grow your audience</h2>
+  <p>Engage visitors with a modern layout.</p>
+  <a class="cae-hero__cta" href="/pricing">See pricing</a>
+</section>
+```
+
+---
+
+## ⚡ Performance & Core Web Vitals
+- Follow `06-performance.mdc`: limit CSS/JS, lazy-load offscreen media, set dimensions to avoid CLS.  
+- Avoid blocking third-party scripts; use `defer/async` where safe.  
+- Use responsive images and optimized formats (WebP, AVIF).
+
+---
+
+## 🧭 Internal Linking & Navigation
+- Widgets may output **navs** (e.g., footer menus) — ensure links are crawlable (no JS-only routing).  
+- Mark active states semantically when useful (e.g., `aria-current="page"`).
+
+---
+
+## 🖼️ Images
+- Always set `alt` attributes; use descriptive text relevant to content.  
+- Provide `width`/`height` to minimize CLS.  
+- Use captions where they add value.
+
+---
+
+## 🚫 Forbidden (SEO Context)
+- Multiple `<h1>` in a single widget unless content structure requires (rare).  
+- Hiding keyword-stuffed text.  
+- Injecting meta tags or canonical links — leave to theme/SEO plugin.  
+- Loading SEO-irrelevant heavy JS.
+
+---
+
+## ✅ Definition of Done (SEO Basics)
+- Markup is **semantic** and **accessible**.  
+- Heading hierarchy respected (no extra `<h1>`).  
+- Links are descriptive and crawlable.  
+- Images have alt + dimensions.  
+- Performance budget respected to support Core Web Vitals.
+
+---
+
+## 🧭 Agent Routing
+- Markup semantics → **Agent 1** + review by **Agent 4**.  
+- Performance vitals → **Agent 5**.  
+- Final validation → **Agent 0**.
+
+---
+
+**End of 13 SEO — Authoritative.**

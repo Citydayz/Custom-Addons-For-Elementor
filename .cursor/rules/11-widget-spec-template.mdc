@@ -1,0 +1,161 @@
+# Cursor Rules — 11 Widget Spec (Template)
+> **Purpose:** Standardized brief for creating a new Elementor widget within **Custom Addons for Elementor by Hugo Scheer**.  
+> **Usage:** Duplicate this file per widget (do not edit this master). Fill all sections before implementation.  
+> **Hierarchy:** Must comply with `01-project.mdc`, `02-architecture.mdc`, `03-wp-standards.mdc`, `04-security.mdc`, `05-accessibility.mdc`, `06-performance.mdc`, `07-gdpr-consent.mdc`, `08-assets.mdc`.
+
+---
+
+## 1) Summary
+- **Widget Name:** `<Human name>` (e.g., CAE Footer)  
+- **Slug:** `cae-<feature>` (e.g., `cae-footer`)  
+- **Category:** `general` or `cae-widgets`  
+- **Goal (1–2 lines):** `<What problem this widget solves>`
+
+**Done Criteria (high level):**
+- Appears in Elementor editor under the chosen category.  
+- All controls work (content + style) with sensible defaults honoring **Global Colors/Typo**.  
+- Front-end render is semantic, accessible, responsive.  
+- Assets load only when widget is present.  
+- Security baseline passes (sanitize/esc/nonce).
+
+---
+
+## 2) Files & Paths (authoritative)
+- PHP class: `/lib/{slug}/class-{slug}.php`  
+- CSS: `/assets/css/{slug}.css` (only if needed)  
+- JS: `/assets/js/{slug}.js` (only if needed)  
+- Images: `/assets/images/...` (only if needed)
+
+> **No placeholders** in the final deliverable. Cursor must output full file contents.
+
+---
+
+## 3) Controls (Elementor)
+List all **Content** and **Style** controls with types, defaults, and notes.
+
+### 3.1 Content Controls
+| Key | Label | Type | Default | Notes |
+|-----|-------|------|---------|------|
+| `show_logo` | Show Logo | SWITCHER | `yes` | — |
+| `menu_id` | Menu | SELECT | `''` | options from `wp_get_nav_menus()` |
+| `legal_text` | Legal Text | TEXT | `© {year} All rights reserved` | allow tokens: `{year}` |
+
+*(Adjust for your widget.)*
+
+### 3.2 Style Controls
+| Key | Label | Type | Default | Selector Mapping |
+|-----|-------|------|---------|------------------|
+| `text_color` | Text Color | COLOR | Global | `{{WRAPPER}} .{slug}` |
+| `padding` | Padding | DIMENSIONS | `0` | `{{WRAPPER}} .{slug}` |
+
+> Defaults should inherit **Global Colors** and **Global Typography** when possible.
+
+---
+
+## 4) Render Contract
+- Root element must include class `.{slug}`.  
+- Use **semantic HTML** (`header`, `footer`, `nav`, `section`, etc.).  
+- Escape all outputs appropriately.  
+- A11y: focusable controls, visible focus, ARIA only if needed.  
+- Include dynamic year replacement if relevant (e.g., `{year}` → `date('Y')`).
+
+**Example skeleton (PHP):**
+```php
+<?php
+class Cae_Sample_Widget extends \Elementor\Widget_Base {
+  public function get_name() { return '{slug}'; }
+  public function get_title() { return __( 'CAE Sample', 'cae' ); }
+  public function get_icon() { return 'eicon-code'; }
+  public function get_categories() { return [ 'general' ]; }
+
+  protected function register_controls() { /* Content + Style controls */ }
+
+  protected function render() {
+    $s = $this->get_settings_for_display();
+    $legal = isset($s['legal_text']) ? str_replace('{year}', date('Y'), $s['legal_text']) : '';
+    echo '<section class="' . esc_attr('{slug}') . '">';
+    echo '<p>' . wp_kses_post( $legal ) . '</p>';
+    echo '</section>';
+  }
+}
+```
+
+---
+
+## 5) Assets
+- **Register** CSS/JS in global registry (see `02-architecture.mdc`).  
+- **Enqueue conditionally** only when widget present (registry pattern or Elementor hooks).  
+- Provide handles: `{slug}` (e.g., `cae-footer`).
+
+### 5.1 CSS (scoped)
+```css
+.{slug} { padding: 1rem; }
+.{slug} a:focus { outline: 2px solid; outline-offset: 2px; }
+```
+
+### 5.2 JS (optional)
+```js
+(function(){
+  document.querySelectorAll('.{slug}').forEach(function(root){
+    // Progressive enhancement here
+  });
+})();
+```
+
+---
+
+## 6) A11y & GDPR Notes
+- A11y: list specific requirements (e.g., aria-labels, keyboard behavior).  
+- GDPR: if widget embeds third-party or tracking, specify consent category and gating mechanism.
+
+---
+
+## 7) Performance Notes
+- Estimated CSS size: `~ X KB` ; JS size: `~ Y KB`.  
+- Any large media? how optimized?  
+- Defer/async safe? lazy-loading used?
+
+---
+
+## 8) Risks & Assumptions
+- `<Any assumptions you made (APIs available, settings, etc.)>`  
+- Risks: `<compat breaks, heavy assets, third-party dependencies>`
+
+---
+
+## 9) Test Plan (manual)
+- Add widget to a fresh page; verify all controls.  
+- Check responsive behavior @ 360px / 768px / 1024px+.  
+- Keyboard navigate interactive elements (Tab/Enter/Space/Esc).  
+- Verify no console/PHP errors.  
+- Confirm assets are enqueued only on pages using the widget.
+
+---
+
+## 10) Deliverables (what Cursor must output)
+- [ ] Full PHP class file with exact path.  
+- [ ] CSS file (if needed) with exact path.  
+- [ ] JS file (if needed) with exact path.  
+- [ ] Enqueue details (hook, handles, dependencies).  
+- [ ] Short usage note: how to add the widget in Elementor.  
+- [ ] Self-check against Security • A11y • Perf • GDPR.
+
+---
+
+## Appendix — Example Briefs
+
+### A) Footer (multi-columns)
+- Columns: 1–4; logo toggle; select WP menus; legal text with `{year}` token.  
+- A11y: `<footer>`, labeled navs, focus states.  
+- GDPR: none by default.  
+- Perf: small CSS grid, no JS unless needed.
+
+### B) Hero (background + text + tags)
+- Background image/video; title, subtitle, optional tags.  
+- Controls for overlay opacity, alignment, spacing.  
+- A11y: heading hierarchy, contrast, motion respect.  
+- Perf: lazy background, minimal JS.
+
+---
+
+**End of 11 Widget Spec (Template).**

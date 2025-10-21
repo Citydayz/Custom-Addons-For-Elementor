@@ -1,0 +1,201 @@
+# Cursor Rules — 07 GDPR & Consent (Authoritative)
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Scope:** Privacy-by-design rules for any feature that touches personal data, cookies, or tracking.  
+> **Hierarchy:** Overruled only by `01-project.mdc`. If privacy conflicts with design/perf, **privacy wins**.  
+> **Agents:** Primary reviewer **Agent 8 (GDPR)**; final validation by **Agent 0**.
+
+---
+
+## 🎯 Purpose
+Ensure the plugin **never** processes personal data or sets non-essential cookies **without explicit, informed, granular, and revocable consent**, and that all flows respect the **GDPR** and ePrivacy rules applicable in the EU.
+
+---
+
+## 🧱 Privacy-by-Design Principles
+- **Data minimization:** collect only what is strictly necessary.  
+- **Purpose limitation:** use data only for the stated purpose.  
+- **Lawful basis:** consent is default for tracking/analytics/marketing; legitimate interest requires balancing test (not covered here).  
+- **Storage limitation:** define retention and purge schedules.  
+- **Integrity & confidentiality:** secure storage and transport; least privilege.  
+- **Transparency:** plain-language notices; link to privacy policy.  
+- **Accountability:** log consent decisions; document data flows.
+
+---
+
+## 🔍 What Counts as Personal Data / Tracking
+- Email, name, IP, device identifiers, precise geolocation.  
+- Cookies or localStorage that identify a user or track behavior.  
+- Third-party embeds that set identifiers (analytics, ads, social widgets).
+
+If uncertain → treat as **personal data/tracking** and route to **Agent 8**.
+
+---
+
+## ✅ Consent Requirements (EU GDPR + ePrivacy)
+- **Prior consent** before any non-essential cookie or tracking runs.  
+- **Granular choices** (e.g., Analytics vs Marketing).  
+- **Freely given, specific, informed, unambiguous**.  
+- **Documented** (timestamp, categories, version of policy).  
+- **Easy to withdraw** at any time (link “Privacy & Cookies” in footer).
+
+---
+
+## 🍪 Cookie Categories (Baseline)
+- **Essential** (strictly necessary) — allowed by default.  
+- **Analytics** — require consent.  
+- **Marketing/Ads** — require consent.  
+- **Functional (non-essential)** — require consent if they store identifiers.
+
+> Cursor must **not** load non-essential cookies/scripts until consent is captured.
+
+---
+
+## 🧩 Consent Gate — Blocking Pattern
+**Goal:** Prevent non-essential scripts from loading before consent.
+
+### PHP Helper (prints a data gate)
+```php
+function cae_privacy_gate_attr( $category ) {
+  // category: 'analytics' | 'marketing' | 'functional'
+  $category = sanitize_key( $category );
+  return 'data-cae-consent="' . esc_attr( $category ) . '"';
+}
+```
+
+### HTML (Elementor render snippets)
+```html
+<!-- Example: analytics script placeholder -->
+<script type="text/plain" <?php echo cae_privacy_gate_attr('analytics'); ?>>
+  // This script will be activated only after analytics consent
+  // window.ga('create', 'UA-XXXX', 'auto');
+</script>
+```
+
+### JS Activator (run once after consent changes)
+```js
+(function(){
+  function enableCategory(cat) {
+    var nodes = document.querySelectorAll('[data-cae-consent="'+cat+'"]');
+    nodes.forEach(function(n) {
+      if (n.type === 'text/plain') {
+        var s = document.createElement('script');
+        if (n.src) { s.src = n.src; }
+        s.text = n.text || '';
+        n.parentNode.replaceChild(s, n);
+      }
+    });
+  }
+  window.CAE_CONSENT_APPLY = function(state) {
+    // state example: { analytics: true, marketing: false, functional: true }
+    Object.keys(state).forEach(function(cat){ if (state[cat]) enableCategory(cat); });
+  };
+})();
+```
+
+> If a CMP is used (CookieYes, Axeptio, OneTrust…), integrate by calling `CAE_CONSENT_APPLY()` on consent grant/update.
+
+---
+
+## 🧰 Consent Storage & Retrieval
+- Store only **category-level** choices (no personal identifiers).  
+- Suggested storage: short-lived cookie or localStorage, plus **server echo** in HTML (for SSR widgets).  
+- **Never** store raw personal data in cookies.  
+- Provide a **“Change privacy settings”** link to reopen the banner/modal.
+
+### PHP (server echo of choice – optional)
+```php
+function cae_get_consent_state() {
+  // Read from cookie/localStorage via AJAX or echo a default ("all false")
+  return [
+    'analytics'  => false,
+    'marketing'  => false,
+    'functional' => false,
+  ];
+}
+```
+
+---
+
+## 🧾 Third-Party Embeds
+- **Do not** embed third-party iframes/scripts that set cookies until consent.  
+- Use a **placeholder** with “Click to load” + consent notice for YouTube, Maps, etc.  
+- If user clicks, treat as **granular consent** for that category (log + store).
+
+```html
+<div class="cae-embed-placeholder" role="button" tabindex="0" data-cae-consent="functional">
+  <p>To view this content, enable Functional cookies.</p>
+  <button>Enable & Load</button>
+</div>
+```
+
+---
+
+## 🧹 Data Minimization & Pseudonymization
+- Avoid storing full IPs.  
+- If analytics are needed, prefer **anonymized IP** and **event-level sampling**.  
+- Strip query params that include PII before storage.  
+- Hash identifiers only if a stable key is strictly necessary.
+
+---
+
+## 🗄️ Retention & Purge
+- Define a retention per category; recommended defaults:  
+  - Analytics: ≤ 13 months  
+  - Marketing: per vendor policy, but strive for minimums  
+- Provide a purge routine on plugin deactivation or via scheduled task.  
+- Document in README/privacy policy.
+
+---
+
+## 🧑‍⚖️ Data Subject Rights (DSR)
+- Provide contact/flow to: **access, rectification, erasure, restriction, portability, objection**.  
+- If the plugin stores any user-provided content, ensure it can be **found and deleted** on request.  
+- Include a **DSR contact** reference in the README and UI (if admin screens are added).
+
+---
+
+## 🌍 International Transfers
+- Avoid sending personal data outside the EU without adequate safeguards.  
+- Prefer EU-hosted analytics/storage options.  
+- If third parties are used, document processors/subprocessors.
+
+---
+
+## 🧪 Cursor Validation Checklist (per feature)
+- [ ] Non-essential scripts are **blocked** until consent.  
+- [ ] Consent is **granular** and **revocable**.  
+- [ ] No personal data written to cookies/localStorage.  
+- [ ] Third-party embeds are behind placeholders.  
+- [ ] Retention and purge strategies documented.  
+- [ ] Privacy policy hooks/links provided.  
+- [ ] Consent state can be changed at any time.
+
+If any fail → route to **Agent 8 (GDPR)** for remediation.
+
+---
+
+## 🚫 Forbidden
+- Loading analytics/ads prior to opt-in.  
+- Using fingerprinting or opaque identifiers.  
+- Storing email, full name, or unique IDs in cookies.  
+- Hiding consent or making refusal harder than acceptance.
+
+---
+
+## 🔌 Integration Examples (CMP)
+- **CookieYes**: hook into its consent update event, call `CAE_CONSENT_APPLY(state)` accordingly.  
+- **Axeptio**: listen to `axeptio_update` and map categories to { analytics, marketing, functional }.  
+- **OneTrust**: read the consent groups and trigger `CAE_CONSENT_APPLY`.
+
+> Always document the mapping used and default behavior when CMP is absent.
+
+---
+
+## 🧭 Agent Routing
+- Any feature touching personal data → **Agent 8** owns the review.  
+- UI placeholders and gating markup → **Agent 1** implements, **Agent 8** validates.  
+- Final sanity check → **Agent 0**.
+
+---
+
+**End of 07 GDPR & Consent — Authoritative.**

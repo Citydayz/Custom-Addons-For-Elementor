@@ -1,0 +1,224 @@
+# Cursor Rules — 02 Architecture (Authoritative)
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Purpose:** Define the plugin’s internal architecture, boot sequence, widget wiring, and asset routing.  
+> **Contract:** If another file conflicts with architectural rules here, this file prevails (except 01-project.mdc).
+
+---
+
+## 🧭 Architectural Principles
+- **Single entry point** main plugin file; initialization encapsulated in a **Plugin Loader** class.
+- **One folder per widget** under `/lib/{widget-slug}` with a single primary class extending `\Elementor\Widget_Base`.
+- **Conditional assets**: enqueue only when a widget is present on a rendered page.
+- **Explicit boundaries**: registration/bootstrap in `/includes` (optional), widget logic in `/lib`, static assets in `/assets`.
+- **Predictable naming**: slugs, handles, classes follow `01-project.mdc`.
+- **Hard failures** for missing dependencies (Elementor) or unsupported versions.
+
+---
+
+## 🔌 Boot Sequence (Main File)
+1. **Safety checks** on `plugins_loaded`:
+   - WordPress and PHP meet minimum versions.
+   - Elementor is active and meets minimum version.
+2. **Load textdomain**.
+3. **Instantiate `Cae_Plugin`** and call `->init()`.
+4. Register widgets via Elementor hooks.
+5. Register frontend asset strategy (conditional enqueue).
+
+### Pseudocode
+```php
+add_action( 'plugins_loaded', function() {
+  if ( ! did_action( 'elementor/loaded' ) ) { return; } // Admin notice + bail
+  // Version checks…
+
+  // i18n
+  load_plugin_textdomain( 'cae', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+
+  // Boot
+  require_once __DIR__ . '/includes/class-cae-plugin.php';
+  ( new Cae_Plugin( CAE_PLUGIN_FILE ) )->init();
+} );
+```
+
+---
+
+## 🧩 Plugin Loader (`/includes/class-cae-plugin.php`)
+**Responsibilities**
+- Hold plugin constants (PATH, URL, VERSION).
+- Register Elementor widgets using `elementor/widgets/register`.
+- Centralize **asset registration** and conditional enqueue helpers.
+- Provide a **widget registry** used to map slugs → classes → asset files.
+
+### Structure
+```php
+class Cae_Plugin {
+  private $file;
+  public function __construct( $file ) { $this->file = $file; }
+  public function init() {
+    $this->define_constants();
+    add_action( 'elementor/widgets/register', [ $this, 'register_widgets' ] );
+    add_action( 'wp_enqueue_scripts', [ $this, 'register_global_assets' ] );
+    // Optional: admin hooks
+  }
+
+  private function define_constants() {
+    define( 'CAE_VERSION', '0.1.0' );
+    define( 'CAE_PATH', plugin_dir_path( $this->file ) );
+    define( 'CAE_URL', plugin_dir_url( $this->file ) );
+  }
+
+  public function register_widgets( $widgets_manager ) {
+    // Load classes and register
+    require_once CAE_PATH . 'lib/cae-footer/class-cae-footer.php';
+    $widgets_manager->register( new Cae_Footer_Widget() );
+
+    // Additional widgets here (hero, ...)
+  }
+
+  public function register_global_assets() {
+    // Minimal globals only
+    wp_register_style( 'cae-global', CAE_URL . 'assets/css/global.css', [], CAE_VERSION );
+    wp_register_script( 'cae-global', CAE_URL . 'assets/js/global.js', [], CAE_VERSION, true );
+  }
+}
+```
+
+---
+
+## 🧱 Widget Module Contract (`/lib/{widget-slug}/class-{widget-slug}.php`)
+- Extends `\Elementor\Widget_Base`.
+- **Implements**: `get_name()`, `get_title()`, `get_icon()`, `get_categories()`, `register_controls()`, `render()`.
+- **Controls** must expose content and style with sensible defaults using **Elementor global** settings.
+- **Render** returns semantic and escaped HTML (root class: `.{widget-slug}`).
+- **Self-enqueue**: Each widget declares its **asset handles** via a static method or constants so the loader can enqueue when present.
+
+### Minimal Example (contract)
+```php
+class Cae_Footer_Widget extends \Elementor\Widget_Base {
+  const SLUG = 'cae-footer';
+  const STYLE_HANDLE = 'cae-footer';
+  const SCRIPT_HANDLE = 'cae-footer';
+
+  public function get_name() { return self::SLUG; }
+  public function get_title() { return __( 'CAE Footer', 'cae' ); }
+  public function get_icon() { return 'eicon-footer'; }
+  public function get_categories() { return [ 'general' ]; }
+
+  protected function register_controls() {
+    // Controls honoring Global Colors/Typo as defaults
+  }
+
+  protected function render() {
+    echo '<footer class="' . esc_attr( self::SLUG ) . '">';
+    // escaped output...
+    echo '</footer>';
+  }
+}
+```
+
+---
+
+## 🧷 Conditional Enqueue Strategy
+**Goal:** Load widget CSS/JS only on pages where the widget is actually rendered.
+
+### Option A — Elementor Hooks (preferred)
+- Hook into Elementor’s frontend enqueue API per widget (if available) or use `elementor/frontend/after_enqueue_styles` to check presence.
+
+### Option B — Post-render Registry
+- During `render()`, add the widget slug to a **static registry**.
+- On `wp_footer`, enqueue the assets for slugs recorded.
+
+### Registry Pattern
+```php
+final class Cae_Asset_Registry {
+  private static $seen = [];
+  public static function mark( $slug ) { self::$seen[ $slug ] = true; }
+  public static function enqueue() {
+    foreach ( array_keys( self::$seen ) as $slug ) {
+      // Map slug -> assets
+      if ( 'cae-footer' === $slug ) {
+        wp_enqueue_style( 'cae-footer' );
+        wp_enqueue_script( 'cae-footer' );
+      }
+    }
+  }
+}
+add_action( 'wp_footer', [ 'Cae_Asset_Registry', 'enqueue' ] );
+```
+
+In each widget `render()`:
+```php
+Cae_Asset_Registry::mark( Cae_Footer_Widget::SLUG );
+```
+
+---
+
+## 🎛️ Asset Registration (centralized)
+- All assets are **registered** on `wp_enqueue_scripts` with version `CAE_VERSION`.
+- **Per-widget** files live under `/assets/css/{widget}.css` and `/assets/js/{widget}.js`.
+- Use handles identical to slugs (e.g., `cae-footer`).
+
+```php
+add_action( 'wp_enqueue_scripts', function() {
+  // Globals
+  wp_register_style( 'cae-global', CAE_URL . 'assets/css/global.css', [], CAE_VERSION );
+  wp_register_script( 'cae-global', CAE_URL . 'assets/js/global.js', [], CAE_VERSION, true );
+
+  // Widgets
+  $widgets = [ 'cae-footer', 'cae-hero' /* ... */ ];
+  foreach ( $widgets as $slug ) {
+    wp_register_style( $slug, CAE_URL . "assets/css/{$slug}.css", [], CAE_VERSION );
+    wp_register_script( $slug, CAE_URL . "assets/js/{$slug}.js", [], CAE_VERSION, true );
+  }
+}, 9 );
+```
+
+---
+
+## 🧪 Detection & Fail-Fast
+- If Elementor not loaded → show **admin notice** and **deactivate** plugin on activation.
+- If required classes/methods missing → `trigger_error` with clear guidance.
+- If asset files referenced but missing → **do not enqueue**; log (in dev) and continue.
+
+---
+
+## 🧩 Categories & Icons (Elementor)
+- Default category: `general` or a custom category `cae-widgets` registered once.
+- Icons: use Elementor icon names (`eicon-…`) to fit the editor UI.
+
+---
+
+## 🔄 Extensibility
+- Provide filters/actions:
+  - `apply_filters( 'cae_widget_list', $widgets )` for dynamically adding/removing widgets.
+  - `do_action( 'cae_after_render_{slug}', $data )` after widget render.
+- Allow theme or child plugins to hook and override assets with `wp_dequeue_*` + `wp_enqueue_*`.
+
+---
+
+## ✅ Definition of Done (Architecture)
+- Boot succeeds; Elementor presence/version checked.
+- Widgets register correctly; appear in editor; controls render.
+- Assets register once and enqueue **only** when used.
+- No global CSS/JS leakage; each widget scoped to root class.
+- All architectural errors surface early with actionable messages.
+
+---
+
+## ⛔ Prohibited
+- Loading widget assets globally on all pages.
+- Mixing widget logic with bootstrap code.
+- Inline styles/scripts for core logic (except minimal sanitized data).
+- Deriving handles that collide or duplicate (must follow 01-project.mdc).
+
+---
+
+## 🧭 Agent Routing (Bridge)
+- Implementation changes here are executed by **Agent 1**.
+- Security hardening pointers → **Agent 3**.
+- Performance of enqueue/reg → **Agent 5**.
+- A11y markup contracts → **Agent 4**.
+- Quality (structure/naming) → **Agent 2**.
+
+---
+
+**End of 02 Architecture — Authoritative.**

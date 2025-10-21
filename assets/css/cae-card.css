@@ -1,0 +1,393 @@
+/* CAE Card Widget Styles */
+.cae-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 300px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.cae-card:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
+.cae-card__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.cae-card__hover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.cae-card__content {
+  position: relative;
+  z-index: 3;
+  padding: 2rem;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.cae-card__title {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #ffffff;
+}
+
+.cae-card__text {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #ffffff;
+  opacity: 0.9;
+}
+
+.cae-card__button-wrapper {
+  z-index: 2;
+  padding: 0 2rem 2rem 2rem;
+}
+
+.cae-card__button {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #007cba;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.cae-card__button:hover {
+  background-color: #005a87;
+  color: #ffffff;
+  text-decoration: none;
+  transform: translateY(-2px);
+}
+
+/* Override button transform for show-text effect */
+.cae-card--hover-show-text .cae-card__button:hover {
+  transform: translateY(0) !important;
+}
+
+/* Hover Effects - Base styles with transitions */
+.cae-card--hover-zoom,
+.cae-card--hover-slide-up,
+.cae-card--hover-slide-down,
+.cae-card--hover-slide-left,
+.cae-card--hover-slide-right,
+.cae-card--hover-glow {
+  transition: all 0.3s ease;
+}
+
+.cae-card--hover-zoom:hover {
+  transform: scale(1.05);
+}
+
+.cae-card--hover-slide-up:hover {
+  transform: translateY(-10px);
+}
+
+.cae-card--hover-slide-down:hover {
+  transform: translateY(10px);
+}
+
+.cae-card--hover-slide-left:hover {
+  transform: translateX(-10px);
+}
+
+.cae-card--hover-slide-right:hover {
+  transform: translateX(10px);
+}
+
+.cae-card--hover-fade-overlay:hover .cae-card__hover-overlay {
+  opacity: 1;
+}
+
+/* Show-text hover effect with unified animation */
+.cae-card--hover-show-text .cae-card__content {
+  align-items: center;
+  position: relative;
+}
+
+.cae-card--hover-show-text:hover .cae-card__content {
+  align-items: center;
+}
+
+/* Title positioning for show-text effect */
+.cae-card--hover-show-text .cae-card__title {
+  position: absolute;
+  bottom: calc(20px + 30%); /* 30% above button */
+  left: 0;
+  right: 0;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 5; /* Above text and button */
+}
+
+.cae-card--hover-show-text:hover .cae-card__title {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  right: auto;
+  transform: translateY(
+    -1rem
+  ); /* Same as margin-bottom for consistent spacing */
+  margin-bottom: 1rem;
+  text-align: inherit; /* Respect Elementor text alignment */
+}
+
+/* Text animation - appears from bottom and pushes title up */
+.cae-card--hover-show-text .cae-card__text {
+  opacity: 0;
+  transform: translateY(2rem); /* 2x the margin for smooth animation */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 4; /* Above button */
+  text-align: inherit; /* Respect Elementor text alignment */
+  margin-bottom: 2rem; /* Space above button - same as title margin */
+}
+
+.cae-card--hover-show-text:hover .cae-card__text {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Button positioning for show-text effect - button stays at bottom of card */
+.cae-card--hover-show-text .cae-card__button-wrapper {
+  position: absolute !important;
+  bottom: 20px !important; /* Fixed distance from bottom of card */
+  left: 20px !important; /* Match card padding */
+  right: 20px !important; /* Match card padding */
+  z-index: 2 !important; /* Below text and title */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0) !important; /* Override any transforms */
+  margin: 0 !important; /* Remove any margins */
+}
+
+/* Button stays in same position on hover */
+
+/* Normal button positioning for other effects */
+.cae-card:not(.cae-card--hover-show-text) .cae-card__button-wrapper {
+  text-align: center;
+}
+
+.cae-card--hover-show-text:hover .cae-card__hover-overlay {
+  opacity: 1;
+}
+
+.cae-card--hover-flip {
+  perspective: 1000px;
+}
+
+.cae-card--hover-flip .cae-card__content {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.cae-card--hover-flip:hover .cae-card__content {
+  transform: rotateY(180deg);
+}
+
+/* Dynamic flip directions */
+.cae-card--hover-flip[data-flip-direction="rotateX"]:hover .cae-card__content {
+  transform: rotateX(180deg);
+}
+
+.cae-card--hover-flip[data-flip-direction="rotateZ"]:hover .cae-card__content {
+  transform: rotateZ(180deg);
+}
+
+.cae-card--hover-glow:hover {
+  box-shadow: 0 0 20px rgba(0, 123, 186, 0.6);
+}
+
+/* Dynamic glow effect using CSS custom properties */
+.cae-card--hover-glow[data-glow-color]:hover {
+  box-shadow: 0 0 var(--glow-intensity, 20px)
+    rgba(var(--glow-color, 0, 123, 186), var(--glow-opacity, 0.6));
+}
+
+/* Parallax effect for fixed background */
+.cae-card--parallax {
+  background-attachment: fixed;
+}
+
+/* Image position styles */
+.cae-card[style*="background-size: cover"] {
+  background-size: cover !important;
+}
+
+.cae-card[style*="background-size: contain"] {
+  background-size: contain !important;
+}
+
+.cae-card[style*="background-size: auto"] {
+  background-size: auto !important;
+}
+
+.cae-card[style*="background-size: 100% 100%"] {
+  background-size: 100% 100% !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cae-card {
+    min-height: 250px;
+  }
+
+  .cae-card__content {
+    padding: 1.5rem;
+  }
+
+  .cae-card__title {
+    font-size: 1.25rem;
+  }
+
+  .cae-card__text {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cae-card {
+    min-height: 200px;
+  }
+
+  .cae-card__content {
+    padding: 1rem;
+  }
+
+  .cae-card__title {
+    font-size: 1.125rem;
+  }
+
+  .cae-card__text {
+    font-size: 0.875rem;
+  }
+}
+
+/* Accessibility: Ensure touch targets are large enough */
+.cae-card {
+  min-height: 44px;
+}
+
+/* Accessibility: Ensure minimum height for content visibility */
+.cae-card {
+  min-height: 200px; /* Fallback minimum */
+}
+
+/* Responsive height adjustments */
+@media (max-width: 768px) {
+  .cae-card {
+    min-height: 250px; /* Slightly smaller on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .cae-card {
+    min-height: 200px; /* Even smaller on small screens */
+  }
+}
+
+/* Accessibility: Focus styles */
+.cae-card:focus {
+  outline: 2px solid #007cba;
+  outline-offset: 2px;
+}
+
+/* Accessibility: Ensure proper contrast for text */
+.cae-card__title,
+.cae-card__text {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Accessibility: Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .cae-card {
+    transition: none;
+  }
+
+  .cae-card--hover-zoom:hover,
+  .cae-card--hover-slide-up:hover,
+  .cae-card--hover-slide-down:hover,
+  .cae-card--hover-slide-left:hover,
+  .cae-card--hover-slide-right:hover {
+    transform: none;
+  }
+
+  .cae-card__text {
+    transition: none;
+  }
+
+  .cae-card--hover-show-text .cae-card__text {
+    opacity: 1;
+    transform: none;
+  }
+
+  .cae-card--hover-show-text .cae-card__button-wrapper {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    z-index: auto;
+  }
+
+  .cae-card--hover-flip .cae-card__content {
+    transform: none;
+  }
+
+  .cae-card--parallax {
+    background-attachment: scroll;
+  }
+
+  /* Disable show-text positioning animations */
+  .cae-card--hover-show-text .cae-card__content {
+    align-items: center;
+  }
+
+  .cae-card--hover-show-text .cae-card__title {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    margin-bottom: 1rem;
+  }
+
+  .cae-card--hover-show-text .cae-card__text {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Layout positioning for title */

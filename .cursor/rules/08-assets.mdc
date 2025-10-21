@@ -1,0 +1,160 @@
+# Cursor Rules — 08 Assets (Authoritative)
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Scope:** CSS/JS/Images rules — naming, scoping, loading strategy, safety.  
+> **Hierarchy:** Overruled only by `01-project.mdc`. Performance/security constraints from `04` and `06` apply here.
+
+---
+
+## 🎯 Objectives
+- **Predictable structure** for assets per widget + minimal globals.  
+- **No collisions** in handles, file names, or CSS selectors.  
+- **Scoped styles/scripts** (no leakage).  
+- **Load only when needed**, with explicit dependencies and versions.  
+- **Safe images/SVG** handling (no XSS vectors).
+
+---
+
+## 📁 File Layout (Mandatory)
+```
+/assets/
+  /css/
+    /global.css
+    /{widget-slug}.css         # e.g., cae-footer.css
+  /js/
+    /global.js
+    /{widget-slug}.js          # e.g., cae-footer.js
+  /images/                     # only if needed
+```
+- One CSS **and** one JS file **per widget** only if required.  
+- Globals remain **lightweight** (utilities only).
+
+---
+
+## 🪪 Naming & Handles
+- Widget slug: `cae-{feature}` → files: `/assets/css/cae-{feature}.css`, `/assets/js/cae-{feature}.js`.  
+- **Handles** = widget slug (e.g., `cae-footer`).  
+- **No duplicates**: Cursor must check for name collisions and rename deterministically (`-2`, `-3`) if needed, then report.
+
+---
+
+## 🎯 Scoping & CSS Architecture
+- **Root scope** per widget: `.{widget-slug}` (e.g., `.cae-footer`).  
+- Child elements via **BEM-like**: `.cae-footer__col`, `.cae-footer__menu`, `.cae-footer--dark`.  
+- **Never** style unscoped generic tags (e.g., `h2 {}`) inside widget CSS.  
+- Avoid `!important`; prefer specificity via the root scope.  
+- Use **logical properties** for better RTL support (`margin-inline`, `padding-inline`).
+
+### Example
+```css
+.cae-footer { padding: 1rem; }
+.cae-footer__menu { display: flex; gap: .75rem; }
+.cae-footer__menu a { text-decoration: none; }
+.cae-footer--cols-4 .cae-footer__col { width: 25%; }
+```
+
+---
+
+## 🎛️ Elementor Global Tokens
+- **Defaults** must respect Elementor **Global Colors** & **Global Typography**.  
+- Use selectors mapping in `register_controls()` to bind style controls to widget scope.  
+- Prefer CSS variables as a bridge when helpful:
+```css
+.cae-footer { color: var(--cae-text, inherit); }
+```
+
+---
+
+## 🧩 Registration & Enqueue
+- **Register** all assets globally on `wp_enqueue_scripts` with version `CAE_VERSION`.  
+- **Enqueue** conditionnel via la stratégie décrite en `02-architecture.mdc`.  
+- Dependencies must be explicit (e.g., `array('jquery')` only if strictly needed).  
+- Scripts en footer (`in_footer = true`), optionally `defer/async` (see `06-performance.mdc`).
+
+```php
+wp_register_style( 'cae-footer', CAE_URL . 'assets/css/cae-footer.css', [], CAE_VERSION );
+wp_register_script( 'cae-footer', CAE_URL . 'assets/js/cae-footer.js', [], CAE_VERSION, true );
+```
+
+---
+
+## 🔒 Security for Assets
+- **No inline `<script>`** with interpolated variables (unless using `wp_localize_script`/`wp_add_inline_script` with **sanitized** data).  
+- Use `wp_kses_post()` for any allowed inline HTML.  
+- **SVG**: prefer **inline sanitized SVG** or static vetted files; never allow user-uploaded raw SVG without sanitization.  
+- Image tags must include `alt` and explicit dimensions to reduce CLS.
+
+```php
+wp_add_inline_script( 'cae-hero', 'window.CAE_HERO_OPTS = ' . wp_json_encode( $data ) . ';', 'before' );
+```
+
+---
+
+## 🖼️ Images & Media
+- Store images in `/assets/images/` **only when needed**.  
+- Prefer modern formats (WebP/AVIF) with fallbacks when required.  
+- Add `loading="lazy"` for below-the-fold images.  
+- Provide `width`/`height` to prevent layout shifts.  
+- Background images: avoid very large files; consider responsive sizes or CSS `image-set`.
+
+```html
+<img src="<?php echo esc_url($src); ?>" alt="<?php echo esc_attr($alt); ?>" width="800" height="400" loading="lazy">
+```
+
+---
+
+## 🧪 Size Budgets & Reports
+- Per-widget CSS ≤ **8 KB** (soft).  
+- Per-widget JS ≤ **12 KB** (soft).  
+- Global assets combined ≤ **20 KB** (soft).  
+- If exceeded, route to **Agent 5 (Performance)** with a reduction proposal (split, simplify, cache).
+
+Deliverable must include an **approximate size report** (uncompressed).
+
+---
+
+## 🧰 Optional Build (If Introduced Later)
+- If a build step exists (e.g., PostCSS/Rollup/Vite):
+  - Generate per-widget bundles only (no monolith).  
+  - Emit source maps for dev; **exclude** in production.  
+  - Preserve file names and handles (match the widget slug).  
+  - Keep a mapping file (JSON) if chunk names are hashed (but avoid hashing if possible in WP context).
+
+---
+
+## 🔁 Versioning & Cache Busting
+- Version assets with `CAE_VERSION`.  
+- Bump version consistently on release (see `10-release-versioning.mdc`).
+
+---
+
+## 🚫 Forbidden
+- Global CSS that styles common tags (h1, p, a) outside the widget scope.  
+- Importing heavy utility libraries for a single feature.  
+- Inline base64 images > 2 KB.  
+- Loading jQuery if not strictly necessary.  
+- Shipping unminified third‑party code.  
+- Using `@import` in CSS (causes extra requests).
+
+---
+
+## ✅ Definition of Done (Assets)
+- Files created at exact paths with correct names/handles.  
+- CSS & JS are scoped to `. {widget-slug}` with no leakage.  
+- Enqueue occurs **only** when the widget is present.  
+- Accessibility styles (focus states) included where relevant.  
+- Sizes within budgets or justified with a plan.  
+- Images have alt, dimensions, and lazy-loading where applicable.  
+- No security red flags (inline unsanitized scripts, unsafe SVG, etc.).
+
+---
+
+## 🧭 Agent Routing
+- Implementation of assets → **Agent 1**  
+- Performance tuning → **Agent 5**  
+- Security considerations (inline data, SVG) → **Agent 3**  
+- Accessibility focus/contrast styles → **Agent 4**  
+- Final validation → **Agent 0**
+
+---
+
+**End of 08 Assets — Authoritative.**

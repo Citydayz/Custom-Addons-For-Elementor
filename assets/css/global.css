@@ -1,0 +1,60 @@
+/* CAE Global Styles - Minimal utilities */
+.cae-widget {
+  /* Base widget container */
+}
+
+/* Utility classes for common patterns */
+.cae-text-center {
+  text-align: center;
+}
+
+.cae-text-left {
+  text-align: left;
+}
+
+.cae-text-right {
+  text-align: right;
+}
+
+.cae-mb-0 {
+  margin-bottom: 0;
+}
+
+.cae-mb-1 {
+  margin-bottom: 1rem;
+}
+
+.cae-mb-2 {
+  margin-bottom: 2rem;
+}
+
+/* Focus styles for accessibility */
+.cae-focus-visible:focus {
+  outline: 2px solid #007cba;
+  outline-offset: 2px;
+}
+
+/* Screen reader only text */
+.cae-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .cae-mobile-hidden {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .cae-desktop-hidden {
+    display: none;
+  }
+}

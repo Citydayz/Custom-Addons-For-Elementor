@@ -1,0 +1,263 @@
+# Cursor Rules — 01 Project (Authoritative)
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Scope:** WordPress plugin that adds modular, highly customizable Elementor widgets/blocks.  
+> **This file is authoritative.** If any other document contradicts it, **this file wins**.
+
+---
+
+## 🎯 Goal & Non‑Negotiables
+- Deliver a **production‑ready** Elementor add‑ons plugin with **multiple reusable widgets** (e.g., Footer 1–4 columns, Hero with background, headline, subtitle, tags).  
+- Widgets must be **fully customizable** via Elementor controls (content + style) and **respect global** Elementor colors/typography by default.  
+- Front‑end must be **responsive (mobile‑first)**, **accessible**, and safe by **WordPress security baseline** (sanitize/escape/nonces/`$wpdb->prepare()`).
+- **No surprises:** every output must specify exact **file paths** and how to **enqueue** assets.
+- **No linter required** (user choice). Enforce **clarity and consistency** via review, not tooling.
+
+**Do Not Compromise:** Rendering correctness • Responsiveness • Security baseline • GDPR/Consent • Maintainable structure.
+
+---
+
+## 🧱 Target Stack & Versions
+- **WordPress:** 6.x (latest stable within project timeframe)
+- **PHP:** 8.1+
+- **Elementor:** Latest stable (Widgets API)
+- **JavaScript:** ES6+ (no framework dependency unless explicitly approved)
+- **CSS:** Tailwind v3 **optional**; if absent, write scoped vanilla CSS
+- **i18n:** WordPress localization APIs (textdomain: `cae`)
+
+> If an exact version is required in code comments or headers, use a **placeholder to be replaced at release time** (e.g., `Version: 0.1.0`).
+
+---
+
+## 📦 Plugin Identity (Header)
+- **Plugin Name:** Custom Addons for Elementor by Hugo Scheer
+- **Slug (folder):** `custom-addons-for-elementor-by-hugo-scheer`
+- **Main file:** `/custom-addons-for-elementor-by-hugo-scheer.php`
+- **Text Domain:** `cae`
+- **Namespace/Prefix:** Functions, hooks, handles prefixed with `cae_` ; classes may use `Cae_`
+
+> Always include a standard WP plugin header in the main file and load the textdomain at init.
+
+---
+
+## 📁 Mandatory Directory Structure
+```
+/custom-addons-for-elementor-by-hugo-scheer.php      ← plugin main
+/lib/                                                ← PHP sources (one subfolder per widget)
+  /{widget-slug}/
+    /class-{widget-slug}.php                         ← Elementor widget class
+/assets/
+  /css/
+    /global.css                                      ← shared styles (minimal)
+    /{widget-slug}.css                               ← per-widget styles (only if needed)
+  /js/
+    /global.js                                       ← shared behaviors (minimal)
+    /{widget-slug}.js                                ← per-widget scripts (only if needed)
+  /images/                                           ← only if needed
+/languages/                                          ← i18n files (.pot/.po/.mo)
+/includes/                                           ← (optional) bootstrap, helpers, services
+```
+
+**Widget folder contract (`/lib/{widget-slug}/`):**
+- Exactly **one** primary widget class extending `\Elementor\Widget_Base`.
+- File name: `class-{widget-slug}.php`; Class name: `Cae_{PascalName}_Widget`.
+- May include helper classes in the same folder if strictly related to the widget.
+
+---
+
+## 🪪 Naming & Slugs (No Collisions Allowed)
+- Widget slug format: `cae-{feature}` (e.g., `cae-footer`, `cae-hero`).
+- Asset files follow widget slug: `/assets/css/{widget-slug}.css`, `/assets/js/{widget-slug}.js`.
+- Script/style handles: `cae-{widget-slug}` (e.g., `cae-cae-footer` **not allowed**). Use `cae-footer`.
+- CSS scope root class: `.{widget-slug}` (e.g., `.cae-footer`) to avoid leakage.
+- PHP functions: `cae_{verb}_{object}`.
+
+> Cursor must check **duplicates** across all assets and handles. If collision risk: **abort and rename** deterministically (append incremental suffix `-2`, `-3`, …) and report change.
+
+---
+
+## 🔌 Bootstrapping & Registration
+- Initialize on `plugins_loaded`. Fail fast if Elementor is absent or version < required.
+- Provide a plugin loader class (e.g., `Cae_Plugin`) responsible for:
+  - Registering widgets via Elementor’s `widgets/register` hook.
+  - Loading textdomain.
+  - Centralized enqueue helpers (conditional per widget).
+- Expose a **single entry point** to register each widget class.
+
+---
+
+## 🎛️ Widgets: Required Methods & Controls
+Every widget **must** implement:
+- `get_name()`, `get_title()`, `get_icon()`, `get_categories()`
+- `register_controls()` with **content** and **style** sections:
+  - Use Elementor **global colors** / **global typography** as defaults.
+  - Provide controls for: content (texts, booleans, selects/menus), layout (columns, alignment, gaps), style (colors/typos/spacings).
+- `render()` returns semantic HTML with proper escaping and CSS scope.
+
+**Footer example (minimal spec):**
+- Columns: 1–4
+- Options: show/hide logo, choose WP menu(s), legal text with dynamic year
+- Legal year: either computed server‑side or editable via control (both allowed).
+
+**Hero example (minimal spec):**
+- Background image/video, title, subtitle, optional tags/chips
+- Toggle: use global styles vs custom overrides.
+
+---
+
+## 🧷 Assets & Enqueue (Strict)
+- **Per widget:** enqueue its CSS/JS **only on pages where the widget is present**.  
+  - Preferred: Elementor’s enqueue hooks or a post‑render registry to detect presence.
+- **Global assets (`global.css/js`)** must stay **minimal**, only for shared low‑level utilities.
+- **No inline `<style>` / `<script>`** except for critical, sanitized, single‑use data.
+- Provide **versioning** via plugin version for cache busting.
+- Images only when needed; use modern formats when possible.
+
+**Output requirement for Cursor:** For each widget, list:
+- files created + exact paths,
+- enqueue location (hook) + handle names,
+- any dependency array (e.g., `array('jquery')`).
+
+---
+
+## 🛡️ Security Baseline (Must Pass)
+- Input **sanitize** (`sanitize_text_field`, `sanitize_key`, `sanitize_email`, etc.).
+- Output **escape** (`esc_html`, `esc_attr`, `esc_url`, `wp_kses_post` for safe HTML).
+- **Nonces** for any action/form that mutates state (admin or ajax).
+- **SQL**: Only via `$wpdb->prepare()` (no string concatenation).
+- **Files**: Use WP APIs for uploads; validate MIME; deny PHP execution in upload dirs.
+- **No secrets** or credentials in code; never log personal data.
+
+Cursor must **fail the task** if any of these are violated and route to **Agent 3 (Security)** for fixes.
+
+---
+
+## ♿ Accessibility (WCAG 2.1 AA minima)
+- Semantic HTML (landmarks, headings order, lists).
+- Keyboard navigation: tab order logical; actionable elements focusable; visible focus state.
+- ARIA only when necessary; prefer native semantics.
+- Images require `alt`; decorative images use empty `alt=""`.
+- Color contrast acceptable (AA).
+
+Route to **Agent 4 (A11y)** if issues detected.
+
+---
+
+## ⚡ Performance
+- Conditional enqueue only; avoid blocking global assets.
+- Prefer no jQuery unless WordPress core dependency is already present and justified.
+- Lazy‑load media when applicable.
+- Use **transients/object cache** for expensive server work.
+
+Route to **Agent 5 (Performance)** for improvements when added assets exceed minimal footprint or repeated queries are found.
+
+---
+
+## 🧑‍⚖️ GDPR & Consent
+- No personal data without explicit consent and clear purpose.
+- If tracking/analytics/cookies: **do not load** before opt‑in.
+- Provide opt‑out where relevant; minimize data collected.
+
+Route to **Agent 8 (GDPR)** for any flow touching personal data or cookies.
+
+---
+
+## 🌍 Localization (i18n)
+- Textdomain: `cae`; load on init.
+- Wrap user‑facing strings with `__()`, `_e()`, `_x()`; **no concatenation** of translatable fragments.
+- Provide `.pot` generation in `/languages/`.
+
+---
+
+## 🧪 Quality Without Linters
+- The user chose **no lint tooling**. Maintain consistency via human review:
+  - Clear naming, docblocks on public classes/methods, minimal but useful comments.
+  - Break down large functions; avoid deep nesting.
+- **Agent 2 (Quality)** adjusts formatting/naming only; **must not change behavior**.
+
+---
+
+## 🧭 Agent Routing (Bridge to `agent.md`)
+- Build/Implement/Widget/Enqueue → **Agent 1**
+- Security/Nonce/Sanitize/Escape/SQL → **Agent 3**
+- A11y/ARIA/Focus → **Agent 4**
+- Perf/Lazy/Cache/Transient → **Agent 5**
+- GDPR/Consent/Privacy → **Agent 8**
+- Clean/Refactor/Tidy → **Agent 2**
+- Debug/Logs/Error → **Agent 7**
+- Which API/Docs/Reference → **Agent 6**
+
+Default execution chain: **1 → 3 → 4 → 5 → 8 → 2 → 7 → Orchestrator**.
+
+---
+
+## ✅ Definition of Done (Absolute)
+- Widget visible and configurable in Elementor editor; controls work as described.
+- Front‑end renders correctly across breakpoints; CSS scoped (no leakage).
+- Security baseline **passes**; no unescaped outputs; nonces where needed.
+- GDPR: either *not applicable* or *explicitly handled*.
+- A11y: focus order & visible focus; alt text; semantic markup.
+- Performance: **only** necessary assets are enqueued; sizes are reasonable.
+- Deliverable includes:
+  - **Exact file paths** + code,
+  - **Enqueue details** (hook, handles, dependencies),
+  - Short **usage notes** (how to add the widget in Elementor).
+
+If any checkbox fails, **do not deliver**. Route back to the relevant agent(s) then re‑validate via Agent 0.
+
+---
+
+## ⛔ Prohibited / Red Flags
+- Inline JS/CSS for core styles/logic (except minimal sanitized data).
+- Direct DB queries without `$wpdb->prepare()`.
+- Echoing variables without escaping.
+- Loading assets on every page when widget isn’t present.
+- Logging personal or sensitive data.
+- Hardcoding secrets, tokens, or absolute paths.
+
+---
+
+## 📝 Minimum Boilerplate Snippets (for reference only)
+**Plugin header (main file):**
+```php
+<?php
+/**
+ * Plugin Name: Custom Addons for Elementor by Hugo Scheer
+ * Description: Modular Elementor widgets (footer, hero, etc.) with global design defaults.
+ * Version: 0.1.0
+ * Author: Hugo Scheer
+ * Text Domain: cae
+ */
+```
+
+**Widget class skeleton (file: `/lib/cae-footer/class-cae-footer.php`):**
+```php
+<?php
+class Cae_Footer_Widget extends \Elementor\Widget_Base {
+  public function get_name() { return 'cae-footer'; }
+  public function get_title() { return __( 'CAE Footer', 'cae' ); }
+  public function get_icon() { return 'eicon-footer'; }
+  public function get_categories() { return [ 'general' ]; }
+
+  protected function register_controls() {
+    // Content & Style sections, honoring global colors/typography by default.
+  }
+
+  protected function render() {
+    // Semantic <footer> markup with escaped outputs. Root class ".cae-footer".
+  }
+}
+```
+
+> Snippets are **illustrative**; Cursor must output **complete files with exact paths** when implementing a widget.
+
+---
+
+## 📤 Delivery Contract (What Cursor must output per task)
+- **List of files** created/modified with **absolute plugin‑relative paths**.
+- The **full content** of each file (no placeholders).
+- The **hooks** used (for registration and enqueue).
+- Post‑implementation **self‑check** against: Security • A11y • Perf • GDPR • Structure.
+
+---
+
+**End of 01 Project — Authoritative.**

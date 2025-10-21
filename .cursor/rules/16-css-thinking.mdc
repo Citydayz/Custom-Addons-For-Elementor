@@ -1,0 +1,253 @@
+# Cursor Rules — 16 CSS Thinking (Authoritative)
+
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Purpose:** Define thinking patterns for CSS architecture and positioning to avoid "patch" mentality.  
+> **Contract:** When facing CSS positioning/layout issues, follow these principles before writing any CSS.
+
+---
+
+## 🧠 CSS Thinking Principles
+
+### **1. Parent-First Approach**
+
+- **Before writing CSS** for a child element, ask: "What should the parent container be doing?"
+- **Structure first, styling second**: Define the parent's `display`, `flex-direction`, `grid-template`, etc.
+- **Let CSS do the work**: Use natural document flow and flexbox/grid properties instead of absolute positioning.
+
+### **2. Architecture Over Patches**
+
+- **Problem**: "How do I force this element to be somewhere?"
+- **Solution**: "How should the container be structured so elements flow naturally?"
+- **Avoid**: `position: absolute`, `transform: translateX/Y`, `margin: -999px`, etc.
+- **Prefer**: `flex-direction: column`, `justify-content: space-between`, `grid-template-areas`, etc.
+
+### **3. The "Why" Before The "How"**
+
+- **Ask**: "Why is this element not where I want it?"
+- **Common causes**:
+  - Parent doesn't have the right `display` property
+  - Parent doesn't have the right `flex-direction` or `grid` setup
+  - Conflicting CSS rules from other sources
+  - Missing `width: 100%` or `flex: 1` on container
+- **Fix the cause, not the symptom**
+
+### **4. Container Queries Mental Model**
+
+- **Think in containers**: "What does this container need to do?"
+- **Examples**:
+  - "I want content centered vertically" → `display: flex; align-items: center;`
+  - "I want elements stacked vertically" → `flex-direction: column;`
+  - "I want space between elements" → `justify-content: space-between;`
+  - "I want elements to fill available space" → `flex: 1;` or `width: 100%;`
+
+---
+
+## 🎯 Decision Tree for Layout Problems
+
+### **Step 1: Identify the Container**
+
+```
+What is the parent element that should control the layout?
+├── Is it a flexbox container? → Check flex-direction
+├── Is it a grid container? → Check grid-template-areas
+└── Is it a block container? → Consider making it flex/grid
+```
+
+### **Step 2: Define the Container's Job**
+
+```
+What should this container do?
+├── Stack elements vertically? → flex-direction: column
+├── Center content? → justify-content: center; align-items: center
+├── Distribute space? → justify-content: space-between/around
+└── Fill available space? → flex: 1; or height: 100%;
+```
+
+### **Step 3: Let Children Flow Naturally**
+
+```
+What should children do?
+├── Fill available space? → flex: 1; or width: 100%;
+├── Stay at bottom? → margin-top: auto; (in flex column)
+├── Center themselves? → align-self: center;
+└── Stack naturally? → No special positioning needed
+```
+
+---
+
+## 🚫 Anti-Patterns to Avoid
+
+### **The "Force" Mentality**
+
+```css
+/* ❌ DON'T: Force positioning */
+.element {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ✅ DO: Let container handle it */
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.element {
+  margin-top: auto; /* Natural bottom positioning */
+}
+```
+
+### **The "Patch" Mentality**
+
+```css
+/* ❌ DON'T: Add more CSS to fix positioning */
+.element {
+  margin-top: -50px;
+  transform: translateY(20px);
+  z-index: 999;
+}
+
+/* ✅ DO: Fix the container structure */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Natural spacing */
+}
+```
+
+### **The "Override" Mentality**
+
+```css
+/* ❌ DON'T: Override everything with !important */
+.element {
+  position: static !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+/* ✅ DO: Use proper CSS specificity and structure */
+.container .element {
+  /* Natural positioning through proper structure */
+}
+```
+
+---
+
+## 🎨 Common Layout Patterns
+
+### **Vertical Stack with Bottom Element**
+
+```css
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+}
+.content {
+  flex: 1; /* Takes available space */
+}
+.bottom-element {
+  margin-top: auto; /* Pushes to bottom */
+}
+```
+
+### **Centered Content with Fixed Footer**
+
+```css
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+.footer {
+  margin-top: auto; /* Pushes to bottom */
+}
+```
+
+### **Space Between Elements**
+
+```css
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100%;
+}
+```
+
+---
+
+## 🔍 Debugging Checklist
+
+When CSS isn't working as expected:
+
+1. **Check the parent container**:
+
+   - Does it have `display: flex` or `display: grid`?
+   - Is the `flex-direction` correct?
+   - Are `justify-content` and `align-items` set properly?
+
+2. **Check for conflicting CSS**:
+
+   - Are there `position: absolute` rules interfering?
+   - Are there `float` properties causing issues?
+   - Are there `margin: auto` rules conflicting?
+
+3. **Check the natural flow**:
+
+   - Would the element position itself correctly without any special CSS?
+   - Is the container giving it the right constraints?
+
+4. **Simplify the approach**:
+   - Can you achieve the same result with fewer CSS properties?
+   - Is there a more semantic way to structure the HTML?
+
+---
+
+## 🧪 Testing the Approach
+
+Before implementing complex CSS:
+
+1. **Create a minimal test case** with just the essential HTML structure
+2. **Apply only the container CSS** (no child positioning)
+3. **See if elements flow naturally** where you want them
+4. **Add minimal child CSS** only if absolutely necessary
+5. **Verify it works** with different content lengths and screen sizes
+
+---
+
+## ✅ Definition of Done (CSS Thinking)
+
+- **Parent container** has appropriate `display` and layout properties
+- **Children flow naturally** without forced positioning
+- **No `position: absolute`** unless absolutely necessary
+- **No `!important`** overrides for basic positioning
+- **Layout works** with different content lengths
+- **Code is maintainable** and easy to understand
+
+---
+
+## ⛔ Prohibited (CSS Thinking)
+
+- Writing CSS for children before defining parent container behavior
+- Using `position: absolute` as the first solution to positioning problems
+- Adding `!important` to override structural issues
+- Creating complex CSS to work around poor HTML structure
+- Not testing with different content lengths
+
+---
+
+## 🧭 Agent Routing (Bridge)
+
+- CSS architecture issues → **Agent 1** (implementation)
+- Performance impact of CSS approach → **Agent 5**
+- Accessibility of layout structure → **Agent 4**
+- Code quality and maintainability → **Agent 2**
+
+---
+
+**End of 16 CSS Thinking — Authoritative.**

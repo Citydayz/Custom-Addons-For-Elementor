@@ -1,0 +1,235 @@
+# Cursor Rules — 03 WP & Elementor Standards (Authoritative)
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Scope:** Coding standards and usage rules for WordPress + Elementor.  
+> **Hierarchy:** If conflicts arise, `01-project.mdc` prevails; this file prevails over others afterward.
+
+---
+
+## 🎯 Objectif
+Garantir que **chaque livrable** respecte les conventions WordPress + Elementor : API, sécurité de base (sanitize/escape/nonces), i18n, enqueue propre, et contrôles Elementor cohérents avec **Global Colors/Global Typography**.
+
+---
+
+## 🧾 En-tête Plugin & i18n
+- **Fichier principal** : inclure l’en-tête WP standard (voir `01-project.mdc`).  
+- **Textdomain** : `cae`. Toujours envelopper les chaînes visibles utilisateur : `__()`, `_e()`, `_x()`.  
+- **Chargement i18n** : au `plugins_loaded` ou dès le bootstrap.
+```php
+load_plugin_textdomain( 'cae', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+```
+- **Aucune concaténation** de fragments traduisibles ; préférer les placeholders `sprintf()`.
+
+---
+
+## 🧹 Nommage & Préfixes
+- **Préfixe** fonctions/hooks/handles : `cae_...` ; classes : `Cae_...`.  
+- **Slug widget** : `cae-{feature}` (ex. `cae-footer`, `cae-hero`).  
+- **Handles** scripts/styles = slug (ex. `cae-footer`).  
+- **Racine CSS** scope : `.{widget-slug}` (ex. `.cae-footer`).
+
+---
+
+## 🔌 Hooks essentiels
+- Bootstrap : `plugins_loaded`  
+- Registre widgets : `elementor/widgets/register`  
+- Catégorie widgets (facultatif) : `elementor/elements/categories_registered`  
+- Enqueue : `wp_enqueue_scripts` (registre global) + stratégie conditionnelle (voir 02)  
+- Admin notices (erreurs dépendances) : `admin_notices`
+
+---
+
+## 🧠 Sécurité WordPress (baseline)
+**Toujours** valider et échapper :
+
+### Validation (entrée)
+- `sanitize_text_field()`, `sanitize_email()`, `sanitize_key()`, `esc_url_raw()`, `absint()`, `intval()`…  
+- Requêtes SQL : **uniquement** via `$wpdb->prepare()`.
+
+### Échappement (sortie)
+- `esc_html()`, `esc_attr()`, `esc_url()`, `wp_kses_post()` si HTML autorisé.
+
+### Nonces
+- Créer : `wp_create_nonce( 'cae_action' )` ; Vérifier : `wp_verify_nonce( $_REQUEST['_wpnonce'], 'cae_action' )`.
+
+### Exemple
+```php
+$menu_id = isset($_POST['menu_id']) ? absint($_POST['menu_id']) : 0;
+if ( isset($_POST['_wpnonce']) && wp_verify_nonce($_POST['_wpnonce'], 'cae_update') ) {
+  // Safe update…
+}
+echo '<a href="' . esc_url( $url ) . '" class="' . esc_attr( $class ) . '">' . esc_html( $label ) . '</a>';
+```
+
+---
+
+## 📦 Enqueue (scripts/styles) — Règles
+- **Enregistrer** globalement (version = `CAE_VERSION`) ; **enqueuer** **seulement** sur les pages qui utilisent le widget.  
+- Pas d’inline CSS/JS (sauf données minimales, échappées).  
+- Dépendances explicites (`array('jquery')` seulement si nécessaire).
+
+```php
+// Global register (done once)
+wp_register_style( 'cae-global', CAE_URL . 'assets/css/global.css', [], CAE_VERSION );
+wp_register_script( 'cae-global', CAE_URL . 'assets/js/global.js', [], CAE_VERSION, true );
+
+// Per-widget register (example)
+wp_register_style( 'cae-footer', CAE_URL . 'assets/css/cae-footer.css', [], CAE_VERSION );
+wp_register_script( 'cae-footer', CAE_URL . 'assets/js/cae-footer.js', [], CAE_VERSION, true );
+```
+
+> L’enqueue conditionnel est décrit dans `02-architecture.mdc` (registry/Elementor hooks).
+
+---
+
+## 🧩 Standards Elementor — Widget Base
+Chaque widget **doit** étendre `\Elementor\Widget_Base` et implémenter :
+- `get_name()` → slug (`cae-footer`)  
+- `get_title()` → `__('CAE Footer','cae')`  
+- `get_icon()` → icône Elementor (`eicon-...`)  
+- `get_categories()` → `['general']` ou catégorie perso `cae-widgets`  
+- `register_controls()` → sections **Content** + **Style**  
+- `render()` → HTML **sémantique** et **échappé**
+
+### Squelette minimal
+```php
+class Cae_Footer_Widget extends \Elementor\Widget_Base {
+  public function get_name() { return 'cae-footer'; }
+  public function get_title() { return __( 'CAE Footer', 'cae' ); }
+  public function get_icon() { return 'eicon-footer'; }
+  public function get_categories() { return [ 'general' ]; }
+  protected function register_controls() { /* content + style */ }
+  protected function render() {
+    echo '<footer class="cae-footer">';
+    echo esc_html( $this->get_settings_for_display('legal_text') );
+    echo '</footer>';
+  }
+}
+```
+
+---
+
+## 🎛️ Controls — Bonnes pratiques
+- Utiliser les **Controls Manager** : `TEXT`, `TEXTAREA`, `SELECT`, `SWITCHER`, `NUMBER`, `URL`, `COLOR`, **Responsive controls** si pertinent.  
+- **Defaults** : pointer vers **Global Colors / Global Typography** pour hériter du kit Elementor.  
+- **Sanitization** : `default` sûr, `selectors` pour appliquer les styles dans le scope `.cae-{widget}`.
+
+### Exemple — Content Controls
+```php
+$this->start_controls_section( 'section_content', [
+  'label' => __( 'Content', 'cae' ),
+] );
+
+$this->add_control( 'show_logo', [
+  'label' => __( 'Show Logo', 'cae' ),
+  'type'  => \Elementor\Controls_Manager::SWITCHER,
+  'default' => 'yes',
+] );
+
+$this->add_control( 'legal_text', [
+  'label' => __( 'Legal Text', 'cae' ),
+  'type'  => \Elementor\Controls_Manager::TEXT,
+  'default' => sprintf( __( '© %s All rights reserved', 'cae' ), date('Y') ),
+] );
+
+$this->end_controls_section();
+```
+
+### Exemple — Style Controls (Global defaults)
+> Les APIs Global Colors/Global Typography d’Elementor évoluent ; utiliser la mécanique de **selectors** et, quand disponible, les **global tokens** fournis par Elementor dans le panneau.
+```php
+$this->start_controls_section( 'section_style', [
+  'label' => __( 'Style', 'cae' ),
+  'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+] );
+
+$this->add_control( 'text_color', [
+  'label' => __( 'Text Color', 'cae' ),
+  'type'  => \Elementor\Controls_Manager::COLOR,
+  'selectors' => [
+    '{{WRAPPER}} .cae-footer' => 'color: {{VALUE}};',
+  ],
+] );
+
+$this->add_responsive_control( 'padding', [
+  'label' => __( 'Padding', 'cae' ),
+  'type'  => \Elementor\Controls_Manager::DIMENSIONS,
+  'size_units' => [ 'px', '%', 'em', 'rem' ],
+  'selectors' => [
+    '{{WRAPPER}} .cae-footer' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+  ],
+] );
+
+$this->end_controls_section();
+```
+
+---
+
+## 🧭 Menus WordPress (exemple Footer)
+Sélecteur de menu via `wp_get_nav_menus()` puis rendu sécurisé avec `wp_nav_menu()`.
+```php
+$menus = wp_get_nav_menus();
+$options = [ '' => __( '— Select —', 'cae' ) ];
+foreach ( $menus as $m ) { $options[ $m->term_id ] = $m->name; }
+
+$this->add_control( 'menu_id', [
+  'label' => __( 'Menu', 'cae' ),
+  'type'  => \Elementor\Controls_Manager::SELECT,
+  'options' => $options,
+] );
+
+// Render
+$menu_id = absint( $this->get_settings_for_display('menu_id') );
+if ( $menu_id ) {
+  wp_nav_menu([ 'menu' => $menu_id, 'container' => 'nav', 'menu_class' => 'cae-footer__menu' ]);
+}
+```
+
+---
+
+## ♻️ Données dynamiques & Année légale
+- Préférer `date('Y')` côté PHP pour l’année par défaut.  
+- Autoriser la **surcharge** via control `legal_text` (échappé à l’affichage).  
+- Si HTML autorisé pour le texte, utiliser `wp_kses_post()` au `render()`.
+
+```php
+$txt = $this->get_settings_for_display('legal_text');
+echo wp_kses_post( $txt );
+```
+
+---
+
+## 🚫 Dépréciations & Compat
+- **Ne pas** utiliser d’APIs Elementor dépréciées ; vérifier les méthodes `Widget_Base` obligatoires.  
+- Vérifier la présence d’Elementor : `did_action('elementor/loaded')`.  
+- Fournir un **admin notice** clair si Elementor est manquant (et ne pas casser le site).
+
+---
+
+## ✅ Definition of Done (Standards)
+- Tous les textes traduisibles et textdomain correct (`cae`).  
+- Entrées **sanitized**, sorties **escaped**.  
+- Assets **enregistrés** globalement, **enqueued** conditionnellement.  
+- Controls Elementor complets (content + style) avec héritage global par défaut.  
+- Rendu **sémantique**, **accessible** (voir `05-accessibility.mdc`) et **scopé**.
+
+---
+
+## ⛔ Interdits
+- Concaténer du HTML non échappé avec des variables.  
+- Requêtes SQL brutes sans `prepare()`.  
+- Charger les assets d’un widget sur toutes les pages.  
+- Chaînes non traduites ou sans textdomain.
+
+---
+
+## 🧭 Agent Routing
+- Implémentation de contrôles/rendu → **Agent 1**  
+- Ajustements de structure/nommage → **Agent 2**  
+- Sécurité (sanitize/escape/prepare/nonce) → **Agent 3**  
+- A11y des templates → **Agent 4**  
+- Enqueue/perf → **Agent 5**  
+- I18n/l10n → **Agent 2** (style) + **Agent 0** (validation finale)
+
+---
+
+**End of 03 WP & Elementor Standards — Authoritative.**

@@ -1,0 +1,120 @@
+/* CAE Hero Widget Styles */
+.cae-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+.cae-hero__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+.cae-hero__content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  padding: 2rem;
+}
+
+.cae-hero__title {
+  margin: 0 0 1rem 0;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cae-hero__subtitle {
+  margin: 0 0 2rem 0;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.cae-hero__cta {
+  display: inline-block;
+  padding: 1rem 2rem;
+  background-color: #007cba;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.cae-hero__cta:hover,
+.cae-hero__cta:focus {
+  background-color: #005a87;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cae-hero__cta:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* Ensure minimum touch target size */
+.cae-hero__cta {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cae-hero {
+    min-height: 50vh;
+  }
+
+  .cae-hero__content {
+    padding: 1.5rem;
+  }
+
+  .cae-hero__title {
+    font-size: 2rem;
+  }
+
+  .cae-hero__subtitle {
+    font-size: 1.125rem;
+  }
+
+  .cae-hero__cta {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cae-hero__title {
+    font-size: 1.75rem;
+  }
+
+  .cae-hero__subtitle {
+    font-size: 1rem;
+  }
+}
+
+/* Accessibility: Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .cae-hero__cta {
+    transition: none;
+  }
+
+  .cae-hero__cta:hover,
+  .cae-hero__cta:focus {
+    transform: none;
+  }
+}

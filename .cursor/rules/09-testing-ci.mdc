@@ -1,0 +1,111 @@
+# Cursor Rules — 09 Testing & CI (Authoritative)
+> **Project:** Custom Addons for Elementor by Hugo Scheer  
+> **Scope:** Minimal-yet-effective testing strategy and optional CI gates.  
+> **Hierarchy:** Obeys `01-project.mdc`. Security/A11y/Perf/GDPR checks from rules 04–08 are **in-scope** for validation.
+
+---
+
+## 🎯 Goals
+- Catch **critical regressions** early (activation errors, enqueue issues, render basics).  
+- Keep the stack lean (no mandatory heavy frameworks).  
+- Provide **repeatable** checks Cursor can run before delivery.
+
+---
+
+## 🔌 Local Smoke Tests (Manual but scripted guidance)
+> Cursor must provide a **`SMOKE.md`** section in each delivery with steps.
+
+### Activation
+1. Fresh WP site with Elementor active.  
+2. Upload ZIP; **activate** plugin.  
+3. Confirm **no PHP notices/warnings** in logs.
+
+### Editor Presence
+4. Create a page → Elementor editor → verify **CAE** category (or `general`).  
+5. Insert widget (e.g., Footer/Hero) → controls show as spec’d.
+
+### Front Render
+6. Publish page → front-end shows correct markup.  
+7. Confirm **assets are enqueued** only on this page (not site-wide).
+
+### Baseline Checks
+8. Security (sanitize/escape/nonces) — spot-check.  
+9. A11y (focus, alt, semantics) — spot-check.  
+10. Perf (sizes within budgets, lazy images) — spot-check.  
+11. GDPR (no non-essential scripts before consent).
+
+---
+
+## 🧪 Optional Unit Tests (PHPUnit)
+If you enable PHPUnit, focus on **narrow tests**:
+- Widget registration (class exists, registered into Elementor).  
+- Enqueue strategy: registry marks and enqueues expected handles.  
+- Sanitization helpers (where applicable).
+
+**Example skeleton**
+```php
+class Cae_Widget_Test extends WP_UnitTestCase {
+  public function test_footer_class_exists() {
+    $this->assertTrue( class_exists( 'Cae_Footer_Widget' ) );
+  }
+}
+```
+
+> Keep tests **fast**; don’t overfit to Elementor internals.
+
+---
+
+## 🎭 Optional E2E (Playwright) — If added later
+- Load editor, add widget, assert control labels visible.  
+- Publish, check front markup contains root scope class.  
+- Ensure no console errors and assets limited to the page.
+
+---
+
+## 🧰 CI Suggestions (Optional)
+If a CI is configured, keep **lightweight** jobs:
+
+**Job: syntax-check**
+- `php -l` on all PHP files.  
+- Optionally run a quick PHPCS with WordPress rules (non-blocking).
+
+**Job: asset-paths**
+- Verify all enqueued handles have matching files.  
+- Fail if a registered asset path is missing.
+
+**Job: package-zip**
+- Build release ZIP (see `10-release-versioning.mdc`).  
+- Attach as artifact for manual QA.
+
+**Job: smoke-hints**
+- Print a reminder checklist: Security, A11y, Perf, GDPR.
+
+---
+
+## ✅ Definition of Done (Testing)
+- Smoke test passes locally.  
+- No fatal errors on activation or render.  
+- Asset registration/enqueue verified.  
+- Security/A11y/Perf/GDPR **spot-checks OK**.  
+- If CI present: syntax + asset-paths + package jobs green.
+
+---
+
+## 🚫 Forbidden
+- Shipping without doing the smoke steps.  
+- Tests that rely on network availability.  
+- Overly brittle tests tied to Elementor internal markup.
+
+---
+
+## 🧭 Agent Routing
+- Test scaffolding/code samples → **Agent 1**.  
+- Security checks → **Agent 3**.  
+- A11y checks → **Agent 4**.  
+- Perf checks → **Agent 5**.  
+- GDPR checks → **Agent 8**.  
+- Final gate → **Agent 0**.
+
+---
+
+**End of 09 Testing & CI — Authoritative.**
