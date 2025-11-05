@@ -36,6 +36,26 @@ final class Cae_Plugin {
 		add_action( 'elementor/widgets/register', [ $this, 'register_widgets' ] );
 		add_action( 'elementor/elements/categories_registered', [ $this, 'register_widget_category' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'register_assets' ], 9 );
+		
+		// Initialize newsletter AJAX handler
+		$this->init_newsletter_handler();
+		
+		// Schedule GDPR purge for old subscriptions (runs daily)
+		$this->schedule_gdpr_purge();
+	}
+
+	/**
+	 * Initialize newsletter AJAX handler
+	 * Handler must be available even if widgets are not yet registered
+	 */
+	private function init_newsletter_handler() {
+		if ( ! class_exists( 'Cae_Newsletter_Handler' ) ) {
+			require_once CAE_PATH . 'lib/cae-newsletter/class-cae-newsletter-handler.php';
+		}
+		// Only initialize once
+		if ( ! has_action( 'wp_ajax_cae_newsletter_subscribe' ) ) {
+			new Cae_Newsletter_Handler();
+		}
 	}
 
 	/**
@@ -73,12 +93,27 @@ final class Cae_Plugin {
 		require_once CAE_PATH . 'lib/cae-card/class-cae-card-controls.php';
 		require_once CAE_PATH . 'lib/cae-card/class-cae-card-renderer.php';
 		require_once CAE_PATH . 'lib/cae-card/class-cae-card-refactored.php';
+		
+		// Load cae-stats-hero widget and its dependencies
+		require_once CAE_PATH . 'lib/cae-stats-hero/controls/class-cae-stats-hero-controls.php';
+		require_once CAE_PATH . 'lib/cae-stats-hero/class-cae-stats-hero-renderer.php';
+		require_once CAE_PATH . 'lib/cae-stats-hero/class-cae-stats-hero.php';
+		
+		// Load cae-newsletter widget and its dependencies
+		require_once CAE_PATH . 'lib/cae-newsletter/controls/class-cae-newsletter-controls-base.php';
+		require_once CAE_PATH . 'lib/cae-newsletter/controls/class-cae-newsletter-content-controls.php';
+		require_once CAE_PATH . 'lib/cae-newsletter/controls/class-cae-newsletter-style-controls.php';
+		require_once CAE_PATH . 'lib/cae-newsletter/class-cae-newsletter-renderer.php';
+		require_once CAE_PATH . 'lib/cae-newsletter/class-cae-newsletter-handler.php';
+		require_once CAE_PATH . 'lib/cae-newsletter/class-cae-newsletter.php';
 
 		// Register widgets
 		$widgets_manager->register( new Cae_Hero_Widget() );
 		$widgets_manager->register( new Cae_Footer_Widget() );
 		$widgets_manager->register( new Cae_Repeater_Section_Widget() );
 		$widgets_manager->register( new Cae_Card_Widget_Refactored() );
+		$widgets_manager->register( new Cae_Stats_Hero_Widget() );
+		$widgets_manager->register( new Cae_Newsletter_Widget() );
 	}
 
 	/**
@@ -115,7 +150,7 @@ final class Cae_Plugin {
 		);
 
 		// Widget-specific assets
-		$widgets = [ 'cae-hero', 'cae-footer', 'cae-repeater-section', 'cae-card' ];
+		$widgets = [ 'cae-hero', 'cae-footer', 'cae-repeater-section', 'cae-card', 'cae-newsletter' ];
 		foreach ( $widgets as $slug ) {
 			wp_register_style(
 				$slug,
@@ -133,6 +168,22 @@ final class Cae_Plugin {
 			);
 		}
 
+		// Register cae-stats-hero assets
+		wp_register_style(
+			'cae-stats-hero',
+			CAE_URL . 'assets/css/cae-stats-hero.css',
+			[],
+			CAE_VERSION
+		);
+
+		wp_register_script(
+			'cae-stats-hero',
+			CAE_URL . 'assets/js/cae-stats-hero.js',
+			[],
+			CAE_VERSION,
+			true
+		);
+
 		// Add defer attribute to non-critical scripts
 		add_filter( 'script_loader_tag', [ $this, 'add_defer_attribute' ], 10, 2 );
 	}
@@ -145,7 +196,7 @@ final class Cae_Plugin {
 	 * @return string Modified script tag.
 	 */
 	public function add_defer_attribute( $tag, $handle ) {
-		$defer_scripts = [ 'cae-hero', 'cae-footer', 'cae-repeater-section', 'cae-card', 'cae-consent-gate' ];
+		$defer_scripts = [ 'cae-hero', 'cae-footer', 'cae-repeater-section', 'cae-card', 'cae-stats-hero', 'cae-newsletter', 'cae-consent-gate' ];
 		
 		if ( in_array( $handle, $defer_scripts, true ) ) {
 			return str_replace( ' src', ' defer src', $tag );
@@ -163,6 +214,39 @@ final class Cae_Plugin {
 		wp_enqueue_style( 'cae-hero', CAE_URL . 'assets/css/cae-hero.css', [], CAE_VERSION );
 		wp_enqueue_style( 'cae-footer', CAE_URL . 'assets/css/cae-footer.css', [], CAE_VERSION );
 		wp_enqueue_style( 'cae-repeater-section', CAE_URL . 'assets/css/cae-repeater-section.css', [], CAE_VERSION );
+		wp_enqueue_style( 'cae-stats-hero', CAE_URL . 'assets/css/cae-stats-hero.css', [], CAE_VERSION );
+		wp_enqueue_style( 'cae-newsletter', CAE_URL . 'assets/css/cae-newsletter.css', [], CAE_VERSION );
+	}
+
+	/**
+	 * Schedule GDPR purge for old newsletter subscriptions
+	 */
+	private function schedule_gdpr_purge() {
+		// Schedule daily purge if not already scheduled
+		if ( ! wp_next_scheduled( 'cae_newsletter_purge_old_subscriptions' ) ) {
+			wp_schedule_event( time(), 'daily', 'cae_newsletter_purge_old_subscriptions' );
+		}
+		
+		// Hook the purge function
+		add_action( 'cae_newsletter_purge_old_subscriptions', [ $this, 'purge_old_subscriptions' ] );
+	}
+
+	/**
+	 * Purge old newsletter subscriptions (GDPR compliance)
+	 * Runs daily via WordPress cron
+	 */
+	public function purge_old_subscriptions() {
+		if ( ! class_exists( 'Cae_Newsletter_Handler' ) ) {
+			require_once CAE_PATH . 'lib/cae-newsletter/class-cae-newsletter-handler.php';
+		}
+		
+		// Purge subscriptions older than 2 years (730 days)
+		$purged = Cae_Newsletter_Handler::purge_old_subscriptions( 730 );
+		
+		// Log purge in debug mode only
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && $purged > 0 ) {
+			error_log( sprintf( 'CAE Newsletter: Purged %d old subscription(s) for GDPR compliance', $purged ) );
+		}
 	}
 }
 

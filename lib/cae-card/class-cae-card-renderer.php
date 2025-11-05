@@ -40,6 +40,7 @@ class Cae_Card_Renderer {
 		$card_title = sanitize_text_field( $settings['card_title'] ?? '' );
 		$card_text = sanitize_textarea_field( $settings['card_text'] ?? '' );
 		$card_link = $settings['card_link'] ?? [];
+		$card_link_formation = ! empty( $settings['card_link_formation'] ) ? absint( $settings['card_link_formation'] ) : 0;
 		$hover_effect = sanitize_key( $settings['hover_effect'] ?? 'none' );
 		$image_position = sanitize_key( $settings['image_position'] ?? 'cover' );
 		$content_position = sanitize_key( $settings['content_position'] ?? 'middle' );
@@ -47,10 +48,19 @@ class Cae_Card_Renderer {
 		$show_button = 'yes' === ( $settings['show_button'] ?? 'no' );
 		$button_text = sanitize_text_field( $settings['button_text'] ?? '' );
 		$button_link = $settings['button_link'] ?? [];
+		$button_link_formation = ! empty( $settings['button_link_formation'] ) ? absint( $settings['button_link_formation'] ) : 0;
 
+		// If Formation is selected, override the link
+		if ( $card_link_formation > 0 ) {
+			$formation_url = get_permalink( $card_link_formation );
+			if ( $formation_url ) {
+				$card_link = [ 'url' => $formation_url ];
+			}
+		}
+		
 		$background_style = $this->get_background_style( $card_image, $image_position );
 		$link_attributes = $this->get_link_attributes( $card_link );
-		$wrapper_tag = ! empty( $card_link['url'] ) ? 'a' : 'div';
+		$wrapper_tag = $this->get_wrapper_tag( $card_link );
 		$hover_class = $this->get_hover_class( $hover_effect );
 		$image_position_class = $this->get_image_position_class( $image_position );
 		$hover_attributes = $this->get_hover_attributes( $settings );
@@ -79,10 +89,47 @@ class Cae_Card_Renderer {
 				<div class="cae-card__button-wrapper">
 					<?php
 					$button_attributes = '';
-					if ( ! empty( $button_link['url'] ) ) {
-						$button_attributes = 'href="' . esc_url( $button_link['url'] ) . '"';
-						if ( ! empty( $button_link['is_external'] ) ) {
-							$button_attributes .= ' target="_blank" rel="noopener"';
+					
+					// If Formation is selected for button, override the link
+					if ( $button_link_formation > 0 ) {
+						$formation_url = get_permalink( $button_link_formation );
+						if ( $formation_url ) {
+							$button_link = [ 'url' => $formation_url ];
+						}
+					}
+					
+					// Handle dynamic tags - can be string or array
+					$button_url = '';
+					$button_is_external = false;
+					$button_nofollow = false;
+					
+					if ( is_string( $button_link ) ) {
+						// Dynamic tag returned as simple string
+						$button_url = $button_link;
+					} elseif ( is_array( $button_link ) && ! empty( $button_link['url'] ) ) {
+						// Standard Elementor URL format
+						$button_url = $button_link['url'];
+						$button_is_external = ! empty( $button_link['is_external'] );
+						$button_nofollow = ! empty( $button_link['nofollow'] );
+					}
+					
+					if ( ! empty( $button_url ) && '#' !== $button_url ) {
+						$button_attributes = 'href="' . esc_url( $button_url ) . '"';
+						
+						$button_rel_attrs = [];
+						
+						if ( $button_is_external ) {
+							$button_rel_attrs[] = 'noopener';
+							$button_rel_attrs[] = 'noreferrer';
+							$button_attributes .= ' target="_blank"';
+						}
+						
+						if ( $button_nofollow ) {
+							$button_rel_attrs[] = 'nofollow';
+						}
+						
+						if ( ! empty( $button_rel_attrs ) ) {
+							$button_attributes .= ' rel="' . esc_attr( implode( ' ', $button_rel_attrs ) ) . '"';
 						}
 					}
 					?>
@@ -107,12 +154,22 @@ class Cae_Card_Renderer {
 		var cardTitle = settings.card_title;
 		var cardText = settings.card_text;
 		var cardLink = settings.card_link;
+		var cardLinkFormation = settings.card_link_formation || 0;
 		var hoverEffect = settings.hover_effect;
 		var contentPosition = settings.content_position || 'middle';
 		var contentAlign = settings.content_align || 'center';
 		var showButton = settings.show_button === 'yes';
 		var buttonText = settings.button_text || '';
 		var buttonLink = settings.button_link || {};
+		var buttonLinkFormation = settings.button_link_formation || 0;
+		
+		// If Formation is selected, override the link
+		if (cardLinkFormation && parseInt(cardLinkFormation) > 0) {
+			var formationUrl = '#';
+			// In editor, we can't get permalink directly, so we'll use a placeholder
+			// The actual URL will be generated on frontend
+			cardLink = { url: formationUrl };
+		}
 		
 		// Hover effect attributes
 		var hoverAttrs = '';
@@ -162,14 +219,40 @@ class Cae_Card_Renderer {
 			imagePositionClass = 'cae-card--parallax';
 		}
 		
-		// Link attributes
+		// Link attributes - handle both string (dynamic tag) and object format
 		var linkAttrs = '';
 		var wrapperTag = 'div';
-		if (cardLink && cardLink.url) {
+		var cardUrl = '';
+		
+		if (typeof cardLink === 'string' && cardLink && cardLink !== '#') {
+			// Dynamic tag returned as simple string
+			cardUrl = cardLink;
+		} else if (cardLink && cardLink.url && cardLink.url !== '#') {
+			// Standard Elementor URL format
+			cardUrl = cardLink.url;
+		}
+		
+		if (cardUrl) {
 			wrapperTag = 'a';
-			linkAttrs = 'href="' + cardLink.url + '"';
-			if (cardLink.is_external) {
-				linkAttrs += ' target="_blank" rel="noopener"';
+			linkAttrs = 'href="' + cardUrl + '"';
+			
+			// Only process rel attributes if we have an object format
+			if (cardLink && typeof cardLink === 'object') {
+				var relAttrs = [];
+				
+				if (cardLink.is_external) {
+					relAttrs.push('noopener');
+					relAttrs.push('noreferrer');
+					linkAttrs += ' target="_blank"';
+				}
+				
+				if (cardLink.nofollow) {
+					relAttrs.push('nofollow');
+				}
+				
+				if (relAttrs.length > 0) {
+					linkAttrs += ' rel="' + relAttrs.join(' ') + '"';
+				}
 			}
 		}
 		#>
@@ -193,10 +276,45 @@ class Cae_Card_Renderer {
 			<# if (showButton && buttonText) { #>
 				<div class="cae-card__button-wrapper">
 					<# var buttonAttrs = '';
-					if (buttonLink && buttonLink.url) {
-						buttonAttrs = 'href="' + buttonLink.url + '"';
-						if (buttonLink.is_external) {
-							buttonAttrs += ' target="_blank" rel="noopener"';
+					var buttonUrl = '';
+					
+					// If Formation is selected for button, override the link
+					if (buttonLinkFormation && parseInt(buttonLinkFormation) > 0) {
+						// In editor, use placeholder - actual URL generated on frontend
+						buttonUrl = '#';
+					}
+					
+					// Handle both string (dynamic tag) and object format
+					if (!buttonUrl) {
+						if (typeof buttonLink === 'string' && buttonLink && buttonLink !== '#') {
+							// Dynamic tag returned as simple string
+							buttonUrl = buttonLink;
+						} else if (buttonLink && buttonLink.url && buttonLink.url !== '#') {
+							// Standard Elementor URL format
+							buttonUrl = buttonLink.url;
+						}
+					}
+					
+					if (buttonUrl) {
+						buttonAttrs = 'href="' + buttonUrl + '"';
+						
+						// Only process rel attributes if we have an object format
+						if (buttonLink && typeof buttonLink === 'object' && !buttonLinkFormation) {
+							var buttonRelAttrs = [];
+							
+							if (buttonLink.is_external) {
+								buttonRelAttrs.push('noopener');
+								buttonRelAttrs.push('noreferrer');
+								buttonAttrs += ' target="_blank"';
+							}
+							
+							if (buttonLink.nofollow) {
+								buttonRelAttrs.push('nofollow');
+							}
+							
+							if (buttonRelAttrs.length > 0) {
+								buttonAttrs += ' rel="' + buttonRelAttrs.join(' ') + '"';
+							}
 						}
 					}
 					#>
@@ -247,17 +365,44 @@ class Cae_Card_Renderer {
 	/**
 	 * Get link attributes
 	 *
-	 * @param array $card_link Link data.
+	 * @param array|string $card_link Link data (can be array or string from dynamic tags).
 	 * @return string Link attributes.
 	 */
 	private function get_link_attributes( $card_link ) {
 		$link_attrs = '';
 		
-		if ( ! empty( $card_link['url'] ) ) {
-			$link_attrs = 'href="' . esc_url( $card_link['url'] ) . '"';
+		// Handle dynamic tags - can be string or array
+		$url = '';
+		$is_external = false;
+		$nofollow = false;
+		
+		if ( is_string( $card_link ) ) {
+			// Dynamic tag returned as simple string
+			$url = $card_link;
+		} elseif ( is_array( $card_link ) && ! empty( $card_link['url'] ) ) {
+			// Standard Elementor URL format
+			$url = $card_link['url'];
+			$is_external = ! empty( $card_link['is_external'] );
+			$nofollow = ! empty( $card_link['nofollow'] );
+		}
+		
+		if ( ! empty( $url ) && '#' !== $url ) {
+			$link_attrs = 'href="' . esc_url( $url ) . '"';
 			
-			if ( ! empty( $card_link['is_external'] ) ) {
-				$link_attrs .= ' target="_blank" rel="noopener"';
+			$rel_attrs = [];
+			
+			if ( $is_external ) {
+				$rel_attrs[] = 'noopener';
+				$rel_attrs[] = 'noreferrer';
+				$link_attrs .= ' target="_blank"';
+			}
+			
+			if ( $nofollow ) {
+				$rel_attrs[] = 'nofollow';
+			}
+			
+			if ( ! empty( $rel_attrs ) ) {
+				$link_attrs .= ' rel="' . esc_attr( implode( ' ', $rel_attrs ) ) . '"';
 			}
 		}
 		
@@ -290,6 +435,29 @@ class Cae_Card_Renderer {
 		}
 		
 		return '';
+	}
+
+	/**
+	 * Get wrapper tag based on link presence
+	 *
+	 * @param array|string $card_link Link data (can be array or string from dynamic tags).
+	 * @return string 'a' or 'div'.
+	 */
+	private function get_wrapper_tag( $card_link ) {
+		$url = '';
+		
+		if ( is_string( $card_link ) ) {
+			// Dynamic tag returned as simple string
+			$url = $card_link;
+		} elseif ( is_array( $card_link ) && ! empty( $card_link['url'] ) ) {
+			$url = $card_link['url'];
+		}
+		
+		if ( ! empty( $url ) && '#' !== $url ) {
+			return 'a';
+		}
+		
+		return 'div';
 	}
 
 	/**

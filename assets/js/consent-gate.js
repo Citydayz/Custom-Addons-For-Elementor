@@ -41,7 +41,9 @@
       }
     } catch (e) {
       // Invalid JSON or localStorage not available
-      console.warn("CAE: Could not load consent state from localStorage");
+      if (typeof CAE_DEBUG !== "undefined") {
+        CAE_DEBUG.log("warn", "CAE: Could not load consent state from localStorage");
+      }
     }
   }
 
@@ -55,7 +57,9 @@
         JSON.stringify(window.CAE_CONSENT_STATE)
       );
     } catch (e) {
-      console.warn("CAE: Could not save consent state to localStorage");
+      if (typeof CAE_DEBUG !== "undefined") {
+        CAE_DEBUG.log("warn", "CAE: Could not save consent state to localStorage");
+      }
     }
   }
 
