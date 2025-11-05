@@ -1,4 +1,5 @@
 # Cursor Rules — 12 Debug & Logging (Authoritative)
+
 > **Project:** Custom Addons for Elementor by Hugo Scheer  
 > **Scope:** Safe, useful, and removable debug/logging strategy for PHP and JS.  
 > **Hierarchy:** Overruled only by `01-project.mdc`. Security (`04`) and Performance (`06`) rules apply.
@@ -6,23 +7,27 @@
 ---
 
 ## 🎯 Purpose
+
 Provide a **consistent** and **safe** way to debug issues and trace execution without leaking secrets or personal data, and to **remove** debug code before release.
 
 ---
 
 ## 🧱 Principles
-- **No PII** (emails, names, tokens, IPs) in logs.  
-- **Guarded logs only**: PHP logs run **only** when `WP_DEBUG` is true; JS logs are enabled only in development contexts.  
-- **Granularity**: Use levels (debug/info/warn/error).  
-- **Traceability**: Include a stable prefix `[CAE]` and a location tag.  
+
+- **No PII** (emails, names, tokens, IPs) in logs.
+- **Guarded logs only**: PHP logs run **only** when `WP_DEBUG` is true; JS logs are enabled only in development contexts.
+- **Granularity**: Use levels (debug/info/warn/error).
+- **Traceability**: Include a stable prefix `[CAE]` and a location tag.
 - **Removability**: All debug points are **clearly marked** and must be stripped before release.
 
 ---
 
 ## 🧰 PHP Debug Helper
+
 Create a tiny helper to centralize PHP logging.
 
 **File:** `/includes/debug.php`
+
 ```php
 <?php
 if ( ! function_exists( 'cae_log' ) ) {
@@ -44,6 +49,7 @@ if ( ! function_exists( 'cae_log' ) ) {
 ```
 
 **Usage**
+
 ```php
 cae_log( 'Footer render start', 'debug', [ 'widget' => 'cae-footer' ] );
 ```
@@ -53,29 +59,50 @@ cae_log( 'Footer render start', 'debug', [ 'widget' => 'cae-footer' ] );
 ---
 
 ## 🧪 JS Debug Helper
+
 Provide a small client-side utility.
 
 **File:** `/assets/js/global.js` (or dedicated debug file in dev only)
+
 ```js
-window.CAE_DEBUG = (function(){
-  function on(){ return (typeof window !== 'undefined') && !!window.localStorage.getItem('CAE_DEBUG'); }
-  function tag(level){ return "[CAE][" + level.toUpperCase() + "]"; }
-  function safe(obj){ try { return JSON.stringify(obj); } catch(e){ return "[unserializable]"; } }
-  return {
-    enable(){ localStorage.setItem('CAE_DEBUG', '1'); },
-    disable(){ localStorage.removeItem('CAE_DEBUG'); },
-    log(level, msg, ctx){
-      if(!on()) return;
-      var line = tag(level) + " " + msg + (ctx ? " | ctx=" + safe(ctx) : "");
-      if(console && console.log) console[level in console ? level : 'log'](line);
+window.CAE_DEBUG = (function () {
+  function on() {
+    return (
+      typeof window !== "undefined" &&
+      !!window.localStorage.getItem("CAE_DEBUG")
+    );
+  }
+  function tag(level) {
+    return "[CAE][" + level.toUpperCase() + "]";
+  }
+  function safe(obj) {
+    try {
+      return JSON.stringify(obj);
+    } catch (e) {
+      return "[unserializable]";
     }
+  }
+  return {
+    enable() {
+      localStorage.setItem("CAE_DEBUG", "1");
+    },
+    disable() {
+      localStorage.removeItem("CAE_DEBUG");
+    },
+    log(level, msg, ctx) {
+      if (!on()) return;
+      var line = tag(level) + " " + msg + (ctx ? " | ctx=" + safe(ctx) : "");
+      if (console && console.log)
+        console[level in console ? level : "log"](line);
+    },
   };
 })();
 ```
 
 **Usage**
+
 ```js
-CAE_DEBUG.log('debug', 'Footer mounted', { widget: 'cae-footer' });
+CAE_DEBUG.log("debug", "Footer mounted", { widget: "cae-footer" });
 ```
 
 > In production release builds, ensure `CAE_DEBUG.enable()` is not called and consider replacing `CAE_DEBUG.log` with a no-op.
@@ -83,60 +110,114 @@ CAE_DEBUG.log('debug', 'Footer mounted', { widget: 'cae-footer' });
 ---
 
 ## 🧭 Where to Place Debug Points
-- **Widget lifecycle**: start/end of `register_controls()` and `render()`.  
-- **Conditional enqueue**: when assets are registered/enqueued.  
-- **Data flows**: before/after fetching menus/options, before output.  
+
+- **Widget lifecycle**: start/end of `register_controls()` and `render()`.
+- **Conditional enqueue**: when assets are registered/enqueued.
+- **Data flows**: before/after fetching menus/options, before output.
 - **Error handling**: catching exceptions; include a short human-readable message.
+
+## 🚨 Common Elementor Editor Issues
+
+### **Template Syntax Errors**
+
+**Problem**: Elementor editor fails to load due to malformed JavaScript templates in `content_template()`.
+
+**Symptoms**:
+
+- Editor shows loading screen indefinitely
+- No widgets visible in Elementor panel
+- Console errors related to template parsing
+
+**Common Causes**:
+
+- Extra `#>` tags in JavaScript templates
+- Unclosed JavaScript blocks
+- Invalid JavaScript syntax in PHP templates
+- Missing or extra `<?php`/`?>` tags
+
+**Debug Steps**:
+
+1. **Isolate the widget**: Comment out `require_once` and `register()` calls
+2. **Test editor**: If editor works, the problem is in that widget
+3. **Check templates**: Look for syntax errors in `content_template()` methods
+4. **Validate JavaScript**: Ensure JavaScript in templates is valid
+
+**Prevention**:
+
+- Always validate JavaScript syntax in templates
+- Use proper `#>` closing tags
+- Test widgets individually before integration
+- Use `cae_log()` to trace template rendering
+
+**Example Fix**:
+
+```php
+// WRONG (extra #>):
+}
+#>
+// Animation data
+
+// CORRECT:
+}
+
+// Animation data
+```
 
 ---
 
 ## 🧩 Reproduction Steps (Template)
+
 Every bug report must include:
 
-1. **Environment**: WP/Elementor versions, theme, active plugins.  
-2. **Steps**: numbered steps to reproduce.  
-3. **Expected vs Observed**.  
-4. **Screenshots/Console snippets** (no PII).  
+1. **Environment**: WP/Elementor versions, theme, active plugins.
+2. **Steps**: numbered steps to reproduce.
+3. **Expected vs Observed**.
+4. **Screenshots/Console snippets** (no PII).
 5. **CAE logs**: copy relevant `[CAE]` lines (sanitize if needed).
 
 ---
 
 ## 🛡️ Security Notes
-- PHP logs are only written when `WP_DEBUG` is true.  
-- JS logs controlled via `localStorage.CAE_DEBUG`.  
-- **Never** log secrets, cookies, tokens, or personal data.  
+
+- PHP logs are only written when `WP_DEBUG` is true.
+- JS logs controlled via `localStorage.CAE_DEBUG`.
+- **Never** log secrets, cookies, tokens, or personal data.
 - For errors involving user input, log **types or sizes**, not raw values.
 
 ---
 
 ## 🧹 Removal Before Release
-- Grep markers: `\[CAE\]`, `cae_log(`, `CAE_DEBUG.log(`.  
-- Replace or remove all debug calls for production packages.  
+
+- Grep markers: `\[CAE\]`, `cae_log(`, `CAE_DEBUG.log(`.
+- Replace or remove all debug calls for production packages.
 - Ensure no debug dependency blocks execution when disabled (no `console` assumptions).
 
 ---
 
 ## ✅ Checklist per PR
-- [ ] Debug logs prefixed with `[CAE]` and levels.  
-- [ ] No PII or secrets in logs.  
-- [ ] Logs guarded (PHP `WP_DEBUG`, JS toggle).  
-- [ ] Repro steps included in the PR if fixing a bug.  
+
+- [ ] Debug logs prefixed with `[CAE]` and levels.
+- [ ] No PII or secrets in logs.
+- [ ] Logs guarded (PHP `WP_DEBUG`, JS toggle).
+- [ ] Repro steps included in the PR if fixing a bug.
 - [ ] Logs removed or kept minimal per the environment policy.
 
 ---
 
 ## 🚫 Forbidden
-- `var_dump`, `print_r` to output; `die()`/`wp_die()` for debugging.  
-- Logging `$_POST`/`$_GET` raw content.  
-- Leaving `console.log` scattered without guards.  
+
+- `var_dump`, `print_r` to output; `die()`/`wp_die()` for debugging.
+- Logging `$_POST`/`$_GET` raw content.
+- Leaving `console.log` scattered without guards.
 - Writing to custom files without WP filesystem API and clear purpose.
 
 ---
 
 ## 🧭 Agent Routing
-- Insert debug points → **Agent 7**  
-- Review logs for safety → **Agent 3** (Security)  
-- Performance impact of excessive logs → **Agent 5**  
+
+- Insert debug points → **Agent 7**
+- Review logs for safety → **Agent 3** (Security)
+- Performance impact of excessive logs → **Agent 5**
 - Final approval → **Agent 0**
 
 ---

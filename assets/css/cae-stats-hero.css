@@ -1,0 +1,325 @@
+/* CAE Stats Hero Widget Styles */
+.cae-stats-hero {
+  display: flex;
+  min-height: 400px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Force full width in any container */
+.elementor-widget-cae-stats-hero {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.elementor-widget-cae-stats-hero .elementor-widget-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cae-stats-hero__left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background-color: #d4af37;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.cae-stats-hero__right {
+  flex: 2;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: flex-end;
+  box-sizing: border-box;
+}
+
+.cae-stats-hero__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.3) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  z-index: 1;
+}
+
+.cae-stats-hero__content {
+  position: relative;
+  z-index: 2;
+  padding: 2rem;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 2rem;
+  min-height: 100%;
+}
+
+.cae-stats-hero__text-column {
+  display: flex;
+  align-items: inherit;
+}
+
+.cae-stats-hero__text-column .cae-stats-hero__text {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.cae-stats-hero__button-column {
+  display: flex;
+  align-items: inherit;
+}
+
+.cae-stats-hero__button-column .cae-stats-hero__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.cae-stats-hero__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.cae-stats-hero__stat:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.cae-stats-hero__number {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.cae-stats-hero__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+}
+
+.cae-stats-hero__text {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #ffffff;
+  margin: 0 0 1.5rem 0;
+  font-weight: 400;
+}
+
+.cae-stats-hero__button {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: transparent;
+  color: #ffffff;
+  text-decoration: none;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* Style pour le bouton en span (sans lien) */
+.cae-stats-hero__button:not(a) {
+  cursor: default;
+}
+
+.cae-stats-hero__button:hover {
+  background-color: #ffffff;
+  color: #000000;
+  text-decoration: none;
+  transform: translateY(-2px);
+}
+
+.cae-stats-hero__button:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cae-stats-hero {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .cae-stats-hero__left {
+    flex: none;
+    padding: 1.5rem;
+  }
+
+  .cae-stats-hero__right {
+    flex: none;
+    min-height: 300px;
+  }
+
+  .cae-stats-hero__stat {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+  }
+
+  .cae-stats-hero__number {
+    font-size: 2.5rem;
+  }
+
+  .cae-stats-hero__label {
+    font-size: 0.75rem;
+  }
+
+  .cae-stats-hero__content {
+    padding: 1.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .cae-stats-hero__text-column {
+    flex: none;
+    width: 100%;
+  }
+
+  .cae-stats-hero__button-column {
+    flex: none;
+    width: 100%;
+  }
+
+  .cae-stats-hero__text {
+    font-size: 0.9rem;
+    margin-bottom: 0;
+  }
+
+  .cae-stats-hero__button {
+    padding: 10px 20px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cae-stats-hero__left {
+    padding: 1rem;
+  }
+
+  .cae-stats-hero__content {
+    padding: 1rem;
+  }
+
+  .cae-stats-hero__stat {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .cae-stats-hero__number {
+    font-size: 2rem;
+  }
+
+  .cae-stats-hero__label {
+    font-size: 0.7rem;
+  }
+
+  .cae-stats-hero__text {
+    font-size: 0.85rem;
+  }
+
+  .cae-stats-hero__button {
+    padding: 8px 16px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Accessibility: Ensure touch targets are large enough */
+.cae-stats-hero__button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Accessibility: Focus styles */
+.cae-stats-hero__button:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* Accessibility: Ensure proper contrast for text */
+.cae-stats-hero__number,
+.cae-stats-hero__label,
+.cae-stats-hero__text {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Accessibility: Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .cae-stats-hero__button {
+    transition: none;
+  }
+
+  .cae-stats-hero__button:hover {
+    transform: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .cae-stats-hero {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .cae-stats-hero__left {
+    background-color: #f0f0f0 !important;
+    color: #000000 !important;
+  }
+
+  .cae-stats-hero__number,
+  .cae-stats-hero__label {
+    color: #000000 !important;
+  }
+
+  .cae-stats-hero__right {
+    background-image: none !important;
+    background-color: #f8f8f8;
+  }
+
+  .cae-stats-hero__text,
+  .cae-stats-hero__button {
+    color: #000000 !important;
+  }
+
+  .cae-stats-hero__button {
+    border-color: #000000 !important;
+  }
+}

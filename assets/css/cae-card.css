@@ -71,11 +71,14 @@
 }
 
 .cae-card__button-wrapper {
-  z-index: 2;
+  position: relative;
+  z-index: 10;
   padding: 0 2rem 2rem 2rem;
 }
 
 .cae-card__button {
+  position: relative;
+  z-index: 11;
   display: inline-block;
   padding: 12px 24px;
   background-color: #007cba;
@@ -189,10 +192,14 @@
   bottom: 20px !important; /* Fixed distance from bottom of card */
   left: 20px !important; /* Match card padding */
   right: 20px !important; /* Match card padding */
-  z-index: 2 !important; /* Below text and title */
+  z-index: 10 !important; /* Above overlays but below title/text for visual hierarchy */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateY(0) !important; /* Override any transforms */
   margin: 0 !important; /* Remove any margins */
+}
+
+.cae-card--hover-show-text .cae-card__button {
+  z-index: 11 !important; /* Ensure button itself is clickable */
 }
 
 /* Button stays in same position on hover */

@@ -171,14 +171,74 @@ class Cae_Card_Content_Controls {
 	 * Register link controls
 	 */
 	private function register_link_controls() {
+		$dynamic_config = [
+			'active' => true,
+		];
+		
+		// Add categories if Dynamic Tags module is available
+		if ( class_exists( '\Elementor\Modules\DynamicTags\Module' ) ) {
+			$dynamic_config['categories'] = [
+				\Elementor\Modules\DynamicTags\Module::POST_META_CATEGORY,
+				\Elementor\Modules\DynamicTags\Module::URL_CATEGORY,
+			];
+		}
+		
+		// Add option to select a Formation post directly
+		$formation_options = $this->get_formation_options();
+		
+		if ( ! empty( $formation_options ) ) {
+			$this->widget->add_control(
+				'card_link_formation',
+				[
+					'label'       => esc_html__( 'Or select a Formation', 'cae' ),
+					'type'        => \Elementor\Controls_Manager::SELECT,
+					'options'    => $formation_options,
+					'default'    => '',
+					'description' => esc_html__( 'Select a formation post to link to. This will override the Card Link URL above.', 'cae' ),
+				]
+			);
+		}
+		
 		$this->widget->add_control(
 			'card_link',
 			[
 				'label'       => esc_html__( 'Card Link', 'cae' ),
 				'type'        => \Elementor\Controls_Manager::URL,
 				'placeholder' => esc_html__( 'https://your-link.com', 'cae' ),
+				'dynamic'     => $dynamic_config,
+				'description' => esc_html__( 'Enter a URL or use Dynamic Tags. If you selected a Formation above, it will take priority.', 'cae' ),
 			]
 		);
+	}
+	
+	/**
+	 * Get Formation posts options for select control
+	 *
+	 * @return array Options array [post_id => post_title]
+	 */
+	private function get_formation_options() {
+		$options = [
+			'' => esc_html__( '— None —', 'cae' ),
+		];
+		
+		// Check if formation post type exists
+		if ( ! post_type_exists( 'formation' ) ) {
+			return $options;
+		}
+		
+		$formations = get_posts( [
+			'post_type'      => 'formation',
+			'posts_per_page' => -1,
+			'post_status'    => 'publish',
+			'orderby'        => 'title',
+			'order'          => 'ASC',
+		] );
+		
+		foreach ( $formations as $formation ) {
+			$options[ $formation->ID ] = $formation->post_title;
+		}
+		
+		return $options;
 	}
 
 	/**
@@ -208,6 +268,37 @@ class Cae_Card_Content_Controls {
 			]
 		);
 
+		$button_dynamic_config = [
+			'active' => true,
+		];
+		
+		// Add categories if Dynamic Tags module is available
+		if ( class_exists( '\Elementor\Modules\DynamicTags\Module' ) ) {
+			$button_dynamic_config['categories'] = [
+				\Elementor\Modules\DynamicTags\Module::POST_META_CATEGORY,
+				\Elementor\Modules\DynamicTags\Module::URL_CATEGORY,
+			];
+		}
+		
+		// Add option to select a Formation post directly for button
+		$formation_options = $this->get_formation_options();
+		
+		if ( ! empty( $formation_options ) ) {
+			$this->widget->add_control(
+				'button_link_formation',
+				[
+					'label'       => esc_html__( 'Or select a Formation', 'cae' ),
+					'type'        => \Elementor\Controls_Manager::SELECT,
+					'options'    => $formation_options,
+					'default'    => '',
+					'condition'  => [
+						'show_button' => 'yes',
+					],
+					'description' => esc_html__( 'Select a formation post to link to. This will override the Button Link URL below.', 'cae' ),
+				]
+			);
+		}
+		
 		$this->widget->add_control(
 			'button_link',
 			[
@@ -216,6 +307,8 @@ class Cae_Card_Content_Controls {
 				'condition' => [
 					'show_button' => 'yes',
 				],
+				'dynamic'     => $button_dynamic_config,
+				'description' => esc_html__( 'Enter a URL or use Dynamic Tags. If you selected a Formation above, it will take priority.', 'cae' ),
 			]
 		);
 

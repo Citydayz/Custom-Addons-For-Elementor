@@ -60,6 +60,63 @@
     });
   };
 
+  /**
+   * CAE Debug Helper
+   * Safe logging system that only logs when enabled
+   */
+  window.CAE_DEBUG = (function () {
+    function isEnabled() {
+      try {
+        return (
+          typeof window !== "undefined" &&
+          window.localStorage.getItem("CAE_DEBUG") === "1"
+        );
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function tag(level) {
+      return "[CAE][" + level.toUpperCase() + "]";
+    }
+
+    function safe(obj) {
+      try {
+        return JSON.stringify(obj);
+      } catch (e) {
+        return "[unserializable]";
+      }
+    }
+
+    return {
+      enable: function () {
+        try {
+          localStorage.setItem("CAE_DEBUG", "1");
+        } catch (e) {
+          // Ignore if localStorage not available
+        }
+      },
+      disable: function () {
+        try {
+          localStorage.removeItem("CAE_DEBUG");
+        } catch (e) {
+          // Ignore if localStorage not available
+        }
+      },
+      log: function (level, msg, ctx) {
+        if (!isEnabled()) {
+          return;
+        }
+        var line = tag(level) + " " + msg + (ctx ? " | ctx=" + safe(ctx) : "");
+        if (console && console[level]) {
+          console[level](line);
+        } else if (console && console.log) {
+          console.log(line);
+        }
+      },
+    };
+  })();
+
   // Initialize global features
   document.addEventListener("DOMContentLoaded", function () {
     CAE.initSmoothScroll();
